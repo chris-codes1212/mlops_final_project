@@ -154,5 +154,9 @@ def main():
 
     # imported_model = keras.models.load_model("model.keras")
 
+    evaluate_model(test_ds)
+
+if __name__ == "__main__":
+    main()
 
 
