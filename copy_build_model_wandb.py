@@ -100,26 +100,6 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
 
     return train_ds, val_ds, test_ds, labels
 
-
-# create funciton to build our deep learning model
-# def build_model(MAX_WORDS, MAX_LEN, labels):
-#     model = Sequential([
-#         Embedding(input_dim=MAX_WORDS + 1, output_dim=128, input_length=MAX_LEN),
-#         LSTM(128, recurrent_activation='sigmoid', use_bias=True),
-#         Dropout(0.2),
-#         Dense(len(labels), activation='sigmoid', dtype='float32')
-#     ])
-
-#     model.compile(
-#         optimizer='adam',
-#         loss='binary_crossentropy',
-#         metrics=['accuracy']  # list or dict matching output names
-#     )
-    
-#     return model
-
-
-
 def build_model(MAX_WORDS, MAX_LEN, labels):
     model = Sequential([
         Embedding(MAX_WORDS + 1, 200, input_length=MAX_LEN),
@@ -144,7 +124,7 @@ def build_callbacks():
         ModelCheckpoint("best_model.keras", monitor="val_loss", save_best_only=True, save_weights_only=False),
         ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_lr=1e-6),
         EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True),
-        WandbCallback(save_model=True)
+        WandbCallback(log_weights=True, log_graph=False)
     ]
 
     return callbacks
