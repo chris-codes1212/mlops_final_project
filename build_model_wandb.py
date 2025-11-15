@@ -156,7 +156,8 @@ def fit_model(model, train_ds, val_ds, callbacks):
     return model, history
 
 def evaluate_model(model, test_ds):
-    test_accuracy, test_loss = model.evaluate(test_ds)
+    results = model.evaluate(test_ds)
+    return results
 
 def main():
 
@@ -175,8 +176,11 @@ def main():
     model, history = fit_model(model, train_ds, val_ds, callbacks)
 
     # imported_model = keras.models.load_model("model.keras")
+    
+    test_results = evaluate_model(model, test_ds)
 
-    evaluate_model(model, test_ds)
+    print(test_results)
+
 
 if __name__ == "__main__":
     main()
