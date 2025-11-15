@@ -17,7 +17,7 @@ from skmultilearn.model_selection import iterative_train_test_split
 import numpy as np
 
 import wandb
-from wandb.keras import WandbCallback
+from wandb.integration.keras import WandbCallback
 
 np.random.seed(42) # NEVER change this line
 
