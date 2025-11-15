@@ -18,7 +18,7 @@ import numpy as np
 
 import wandb
 from wandb.integration.keras import WandbCallback
-from wandb.keras import WandbMetricsLogger
+from wandb.integration.keras import WandbMetricsLogger
 
 np.random.seed(42) # NEVER change this line
 
