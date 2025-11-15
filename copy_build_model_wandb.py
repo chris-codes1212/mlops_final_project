@@ -18,6 +18,7 @@ import numpy as np
 
 import wandb
 from wandb.integration.keras import WandbCallback
+from wandb.keras import WandbMetricsLogger
 
 np.random.seed(42) # NEVER change this line
 
@@ -124,7 +125,8 @@ def build_callbacks():
         ModelCheckpoint("best_model.keras", monitor="val_loss", save_best_only=True, save_weights_only=False),
         ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_lr=1e-6),
         EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True),
-        WandbCallback(log_weights=True, log_graph=False)
+        WandbMetricsLogger()
+        # WandbCallback(log_weights=True, log_graph=False)
     ]
 
     return callbacks
