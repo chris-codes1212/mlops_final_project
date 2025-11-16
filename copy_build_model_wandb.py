@@ -109,10 +109,7 @@ def build_model(MAX_WORDS, MAX_LEN, labels):
     model.compile(
         optimizer="adam",
         loss="binary_crossentropy",
-        metrics=[
-            "accuracy",
-            tf.keras.metrics.AUC(name="auc")
-        ]
+        metrics=[tf.keras.metrics.AUC(name="auc")]
     )
     return model
 
@@ -218,6 +215,20 @@ def main():
     # Evaluate and log to wandb
     test_results = evaluate_model(model, test_ds)
     print(test_results)
+
+    # Create a model artifact
+    model_artifact = wandb.Artifact(
+        name="toxic-comment-classifier",
+        type="model",
+        metadata={
+            "test_loss": test_results["loss"],
+            "test_auc": test_results["auc"],
+        }
+    )
+
+    model_artifact.add_file("best_model.keras")  # already saved by ModelCheckpoint
+    wandb.log_artifact(model_artifact)
+
 
     wandb.finish()
 
