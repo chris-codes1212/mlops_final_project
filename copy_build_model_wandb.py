@@ -174,7 +174,6 @@ def promote_best_model(test_results, model_name="toxic-comment-classifier"):
     except wandb.CommError:
         best_auc = 0  # no production model yet
 
-    # Promote only if current model is better
     if current_auc > best_auc:
         print(f"Promoting model! AUC {current_auc:.4f} > {best_auc:.4f}")
 
@@ -185,16 +184,16 @@ def promote_best_model(test_results, model_name="toxic-comment-classifier"):
             metadata=test_results
         )
         model_artifact.add_file("best_model.keras")
-        wandb.log_artifact(model_artifact)
 
-        # Fetch the latest artifact version and promote
-        latest_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:latest")
-        latest_artifact_version = latest_artifact.version
-        api_artifact_version = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:{latest_artifact_version}")
-        api_artifact_version.update(stage="production")
+        # Add an alias for production
+        model_artifact.aliases.append("production")
+
+        wandb.log_artifact(model_artifact)
 
     else:
         print(f"Current model not better than production (AUC {best_auc:.4f}).")
+
+
 
 
 
