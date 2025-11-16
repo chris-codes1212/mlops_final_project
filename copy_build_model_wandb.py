@@ -186,14 +186,16 @@ def promote_best_model(test_results, model_name="toxic-comment-classifier"):
         )
         model_artifact.add_file("best_model.keras")
         wandb.log_artifact(model_artifact)
-        wandb.run.wait_for_artifacts()
 
-        # Promote to production
-        api_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:latest")
-        model_version = api_artifact.publish()
-        model_version.update(stage="production")
+        # Fetch the latest artifact version and promote
+        latest_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:latest")
+        latest_artifact_version = latest_artifact.version
+        api_artifact_version = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:{latest_artifact_version}")
+        api_artifact_version.update(stage="production")
+
     else:
         print(f"Current model not better than production (AUC {best_auc:.4f}).")
+
 
 
 def main():
