@@ -161,36 +161,42 @@ def evaluate_model(model, test_ds):
     return log_data
 
 def promote_best_model(test_results, model_name="toxic-comment-classifier"):
-    ENTITY = wandb.run.entity
-    PROJECT = wandb.run.project
     current_auc = test_results.get("test_auc", 0)
 
+    # Get the current production artifact
+    ENTITY = wandb.run.entity
+    PROJECT = wandb.run.project
     api = wandb.Api()
-
-    # Fetch current production model
+    
     try:
         prod_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:production")
-        best_auc = prod_artifact.metadata.get("test_auc", 0)
+        prod_auc = prod_artifact.metadata.get("test_auc", 0)
     except wandb.CommError:
-        best_auc = 0  # no production model yet
+        prod_auc = 0  # No production model exists yet
 
-    if current_auc > best_auc:
-        print(f"Promoting model! AUC {current_auc:.4f} > {best_auc:.4f}")
+    if current_auc > prod_auc:
+        print(f"Promoting model! AUC {current_auc:.4f} > {prod_auc:.4f}")
 
-        # Create new artifact for this run and mark as production
+        # Create new artifact for this run
         model_artifact = wandb.Artifact(
             name=model_name,
             type="model",
-            metadata=test_results,
-            aliases=["production"]  # set alias at creation
+            metadata=test_results
         )
         model_artifact.add_file("best_model.keras")
+
+        # Log the artifact
         wandb.log_artifact(model_artifact)
 
-        wandb.log_artifact(model_artifact)
+        # Wait until artifact is fully logged
+        model_artifact.wait()
 
+        # Add the "production" alias
+        model_artifact.aliases.append("production")
+        model_artifact.save()
     else:
-        print(f"Current model not better than production (AUC {best_auc:.4f}).")
+        print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
+
 
 
 
