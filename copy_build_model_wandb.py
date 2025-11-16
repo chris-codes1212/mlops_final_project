@@ -151,29 +151,14 @@ def fit_model(model, train_ds, val_ds, callbacks):
 #     return metrics_dict
 
 def evaluate_model(model, test_ds):
-    results = model.evaluate(test_ds)
-    metric_names = model.metrics_names
-    
-    metrics_dict = {name: value for name, value in zip(metric_names, results)}
-
-    # --- Find the AUC key automatically ---
-    auc_key = None
-    for name in metric_names:
-        if "auc" in name.lower():   # matches auc, AUC, auc_1, etc.
-            auc_key = name
-            break
+    loss, auc = model.evaluate(test_ds)
 
     # Log to wandb
-    log_data = {"test_loss": metrics_dict["loss"]}
-
-    if auc_key:
-        log_data["test_auc"] = metrics_dict[auc_key]
-    else:
-        print("WARNING: No AUC key found! Available metrics:", metric_names)
-
+    log_data = {"test_loss": loss}
+    log_data["test_auc"] = auc
     wandb.log(log_data)
 
-    return metrics_dict
+    return log_data
 
 
 
