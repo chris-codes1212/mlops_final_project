@@ -160,6 +160,23 @@ def evaluate_model(model, test_ds):
 
     return log_data
 
+def promote_best_model(test_results, project_name, model_name="toxic-comment-classifier"):
+    ENTITY = wandb.run.entity
+    current_auc = test_results.get("test_auc", 0)
+
+    try:
+        best_artifact = wandb.Api().artifact(f"{ENTITY}/{model_name}:production")
+        best_auc = best_artifact.metadata.get("test_auc", 0)
+    except wandb.CommError:
+        best_auc = 0
+
+    if current_auc > best_auc:
+        print(f"Promoting model! AUC {current_auc:.4f} > {best_auc:.4f}")
+        registry_entry = wandb.use_artifact(f"{ENTITY}/{project_name}/{model_name}:latest", type="model")
+        registry_model = registry_entry.to_model_registry(name=model_name)
+        registry_model.assign("production")
+    else:
+        print(f"Model not better than current production (AUC {best_auc:.4f}). No promotion.")
 
 
 def main():
@@ -211,9 +228,10 @@ def main():
     model_artifact.add_file("best_model.keras")  # already saved by ModelCheckpoint
     wandb.log_artifact(model_artifact)
 
+    # Promote best model
+    promote_best_model(test_results, wandb.run.project)
 
     wandb.finish()
-
 
 
 if __name__ == "__main__":
