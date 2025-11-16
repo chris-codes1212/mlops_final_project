@@ -143,8 +143,18 @@ def fit_model(model, train_ds, val_ds, callbacks):
 
 def evaluate_model(model, test_ds):
     results = model.evaluate(test_ds)
-    wandb.log({"test_loss": results["loss"], "test_auc": results["auc"]})
-    return results
+    metric_names = model.metrics_names  # e.g. ['loss', 'accuracy', 'auc']
+
+    metrics_dict = {name: value for name, value in zip(metric_names, results)}
+
+    # Log to W&B
+    wandb.log({
+        "test_loss": metrics_dict["loss"],
+        "test_auc": metrics_dict["auc"],
+    })
+
+    return metrics_dict
+
 
 def main():
 
