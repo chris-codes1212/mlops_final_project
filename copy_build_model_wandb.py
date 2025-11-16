@@ -109,7 +109,7 @@ def build_model(MAX_WORDS, MAX_LEN, labels):
     model.compile(
         optimizer="adam",
         loss="binary_crossentropy",
-        metrics=[tf.keras.metrics.AUC(name="auc")]
+        metrics=[tf.keras.metrics.AUC(name="auc", multi_label=True)]
     )
     return model
 
