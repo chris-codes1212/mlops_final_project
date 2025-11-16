@@ -160,23 +160,40 @@ def evaluate_model(model, test_ds):
 
     return log_data
 
-def promote_best_model(test_results, project_name, model_name="toxic-comment-classifier"):
+def promote_best_model(test_results, model_name="toxic-comment-classifier"):
     ENTITY = wandb.run.entity
+    PROJECT = wandb.run.project
     current_auc = test_results.get("test_auc", 0)
 
-    try:
-        best_artifact = wandb.Api().artifact(f"{ENTITY}/{model_name}:production")
-        best_auc = best_artifact.metadata.get("test_auc", 0)
-    except wandb.CommError:
-        best_auc = 0
+    api = wandb.Api()
 
+    # Fetch current production model
+    try:
+        prod_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:production")
+        best_auc = prod_artifact.metadata.get("test_auc", 0)
+    except wandb.CommError:
+        best_auc = 0  # no production model yet
+
+    # Promote only if current model is better
     if current_auc > best_auc:
         print(f"Promoting model! AUC {current_auc:.4f} > {best_auc:.4f}")
-        registry_entry = wandb.use_artifact(f"{ENTITY}/{project_name}/{model_name}:latest", type="model")
-        registry_model = registry_entry.to_model_registry(name=model_name)
-        registry_model.assign("production")
+
+        # Log a new artifact version
+        model_artifact = wandb.Artifact(
+            name=model_name,
+            type="model",
+            metadata=test_results
+        )
+        model_artifact.add_file("best_model.keras")
+        wandb.log_artifact(model_artifact)
+        wandb.run.wait_for_artifacts()
+
+        # Promote to production
+        api_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:latest")
+        model_version = api_artifact.publish()
+        model_version.update(stage="production")
     else:
-        print(f"Model not better than current production (AUC {best_auc:.4f}). No promotion.")
+        print(f"Current model not better than production (AUC {best_auc:.4f}).")
 
 
 def main():
