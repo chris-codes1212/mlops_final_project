@@ -177,21 +177,22 @@ def promote_best_model(test_results, model_name="toxic-comment-classifier"):
     if current_auc > best_auc:
         print(f"Promoting model! AUC {current_auc:.4f} > {best_auc:.4f}")
 
-        # Log a new artifact version
+        # Create new artifact for this run and mark as production
         model_artifact = wandb.Artifact(
             name=model_name,
             type="model",
-            metadata=test_results
+            metadata=test_results,
+            aliases=["production"]  # set alias at creation
         )
         model_artifact.add_file("best_model.keras")
-
-        # Add an alias for production
-        model_artifact.aliases.append("production")
+        wandb.log_artifact(model_artifact)
 
         wandb.log_artifact(model_artifact)
 
     else:
         print(f"Current model not better than production (AUC {best_auc:.4f}).")
+
+
 
 
 
