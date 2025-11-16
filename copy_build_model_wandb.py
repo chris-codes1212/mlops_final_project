@@ -83,12 +83,6 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
             y_train[:, i] * class_weights[i] + 
             (1 - y_train[:, i]) * 1.0  
             )
-        
-        #sample_weights[:, i] = y_train[:, i] * class_weights[i]
-
-
-
-
 
     sample_weights_flat = np.mean(sample_weights, axis=1).astype('float32')
 
@@ -113,11 +107,15 @@ def build_model(MAX_WORDS, MAX_LEN, labels):
 
 
     model.compile(
-        optimizer='adam',
-        loss='binary_crossentropy',
-        metrics=[tf.keras.metrics.AUC(curve="ROC", multi_label=True)]
+        optimizer="adam",
+        loss="binary_crossentropy",
+        metrics=[
+            "accuracy",
+            tf.keras.metrics.AUC(name="auc")
+        ]
     )
     return model
+
 
 
 def build_callbacks():
