@@ -210,7 +210,7 @@ def main():
             "lstm_units": 64,
             "dropout": 0.3,
             "batch_size": 128,
-            "epochs": 20,
+            "epochs": 1,
             "optimizer": "adam"
         }
     )
