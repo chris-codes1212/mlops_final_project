@@ -126,11 +126,11 @@ def build_callbacks():
 
     return callbacks
 
-def fit_model(model, train_ds, val_ds, callbacks):
+def fit_model(model, train_ds, val_ds, epochs, callbacks):
     history = model.fit(
         train_ds,
         validation_data=val_ds,
-        epochs=20,
+        epochs=epochs,
         callbacks=callbacks
     )
 
@@ -195,7 +195,7 @@ def main():
 
     # Train
     callbacks = build_callbacks()
-    model, history = fit_model(model, train_ds, val_ds, callbacks)
+    model, history = fit_model(model, train_ds, val_ds, config.epochs, callbacks)
 
     # Evaluate and log to wandb
     test_results = evaluate_model(model, test_ds)
@@ -205,10 +205,7 @@ def main():
     model_artifact = wandb.Artifact(
         name="toxic-comment-classifier",
         type="model",
-        metadata={
-            "test_loss": test_results["loss"],
-            "test_auc": test_results["auc"],
-        }
+        metadata=test_results
     )
 
     model_artifact.add_file("best_model.keras")  # already saved by ModelCheckpoint
