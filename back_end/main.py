@@ -82,4 +82,9 @@ async def make_prediction(input_data: predict_input):
     # utils.write_logs(input_data, prediction)
 
     # return the prediction from the model
-    return {labels[0]: prediction.tolist()[0][0]}
+    return {labels[0]: prediction.tolist()[0][0],
+            labels[1]: prediction.tolist()[0][1],
+            labels[2]: prediction.tolist()[0][2],
+            labels[3]: prediction.tolist()[0][3],
+            labels[4]: prediction.tolist()[0][4],
+            labels[5]: prediction.tolist()[0][5]}
