@@ -18,12 +18,13 @@ app = FastAPI(
 try:
     ENTITY = 'chris-r-thompson1212-university-of-denver'
     PROJECT = "toxic-comment-multilabel"
-    model, tokenizer = utils.load_production_model_and_tokenizer(ENTITY, PROJECT)
+    model, tokenizer, maxlen = utils.load_production_model_and_tokenizer(ENTITY, PROJECT)
     print("Model Loaded Successfully")
 except FileNotFoundError:
     print("Error: unable to load model or tokenizer pipeline")
     model = None
     tokenizer = None
+    maxlen = None
 
 # try and load model data labels
 try:
@@ -76,7 +77,7 @@ async def make_prediction(input_data: predict_input):
 
     # make prediction with the model
     # processed_input = utils.preprocess_user_input(input_data.comment, tokenizer)
-    prediction = model.predict(utils.preprocess_user_input(input_data.comment, tokenizer))
+    prediction = model.predict(utils.preprocess_user_input(input_data.comment, tokenizer, maxlen))
     
     # write new log to logs file by calling write_logs function
     # utils.write_logs(input_data, prediction)

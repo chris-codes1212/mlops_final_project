@@ -32,8 +32,11 @@ def load_production_model_and_tokenizer(entity, project, model_name="toxic-comme
     tokenizer_file = f"{artifact_path}/tokenizer.pkl"
     with open(tokenizer_file, "rb") as f:
         tokenizer = pickle.load(f)
+    
+    # Get MAX_LEN parameter for tokenizing user data later, set to 300 by default
+    maxlen = artifact.metadata.get("MAX_LEN", 300)
 
-    return model, tokenizer
+    return model, tokenizer, maxlen
 
 def load_labels_from_dataset(entity, project, data_set_name = "toxic-data"):
     api = wandb.Api()
@@ -54,10 +57,10 @@ def clean_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-def preprocess_user_input(user_input, tokenizer):
+def preprocess_user_input(user_input, tokenizer, maxlen):
     user_input_cleaned = clean_text(user_input)
     seq = tokenizer.texts_to_sequences([user_input_cleaned])
-    padded_seq = tf.keras.preprocessing.sequence.pad_sequences(seq, maxlen=300)
+    padded_seq = tf.keras.preprocessing.sequence.pad_sequences(seq, maxlen=maxlen)
     return padded_seq
 
 # # create a funciton to handle writing json logs
