@@ -73,4 +73,4 @@ async def make_prediction(input_data: predict_input):
     # utils.write_logs(input_data, prediction)
 
     # return the prediction from the model
-    return {'Predicted Probabilities': processed_input}
+    return {'Predicted Probabilities': processed_input.tolist()}
