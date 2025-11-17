@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+import datetime
+from pydantic import BaseModel
+
 import pandas as pd
 import tensorflow as tf
 
@@ -63,19 +66,26 @@ def preprocess_user_input(user_input, tokenizer, maxlen):
     padded_seq = tf.keras.preprocessing.sequence.pad_sequences(seq, maxlen=maxlen)
     return padded_seq
 
+
+class log(BaseModel):
+    timestamp: datetime
+    request_text: str
+    predicted_label: str
+    true_label: str
+    
 # # create a funciton to handle writing json logs
-# def write_logs(input_data, prediction):
+def write_logs(input_data, prediction):
 
-#     # create new log object
-#     new_log = log( 
-#         timestamp = datetime.now(),
-#         request_text = input_data.text,
-#         predicted_label = prediction[0],
-#         true_label = input_data.true_label
-#         )
+    # create new log object
+    new_log = log( 
+        timestamp = datetime.now().astimezone().isoformat(),
+        request_text = input_data.text,
+        predicted_label = prediction[0],
+        true_label = input_data.true_label
+        )
 
-#     # format log object as a json object
-#     new_log_json = new_log.model_dump_json()
+    # format log object as a json object
+    new_log_json = new_log.model_dump_json()
     
 #     # set log file path -- Using .jsonl b/c will be cleaner than using a list format
 #     file_path = "../logs/prediction_logs.ndjson"

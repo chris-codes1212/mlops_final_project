@@ -7,7 +7,7 @@ import os
 import sklearn
 
 import utils
-
+import write_logs
 
 # create FastAPI app
 app = FastAPI(
@@ -79,13 +79,22 @@ async def make_prediction(input_data: predict_input):
     # processed_input = utils.preprocess_user_input(input_data.comment, tokenizer)
     prediction = model.predict(utils.preprocess_user_input(input_data.comment, tokenizer, maxlen))
     
-    # write new log to logs file by calling write_logs function
-    # utils.write_logs(input_data, prediction)
+    # create list of prediction probabilities
+    prediction_list = prediction.tolist()
+
+    # create dictionary of prediction probabilities
+    pred_proba_dict = {}
+    for i in labels:
+        pred_proba_dict[i] = prediction_list[0][i]
+
+    # get predicted lables (threshold >0.5)
+    pred_labels = []
+    for label in pred_proba_dict:
+        if label.value > 0.5:
+            pred_labels.append(label)
+
+    # write log to DynamoDB
+    write_logs.write_log(input_data, pred_labels, pred_proba_dict, labels)
 
     # return the prediction from the model
-    return {labels[0]: prediction.tolist()[0][0],
-            labels[1]: prediction.tolist()[0][1],
-            labels[2]: prediction.tolist()[0][2],
-            labels[3]: prediction.tolist()[0][3],
-            labels[4]: prediction.tolist()[0][4],
-            labels[5]: prediction.tolist()[0][5]}
+    return {labels: pred_labels}
