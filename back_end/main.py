@@ -66,11 +66,11 @@ async def make_prediction(input_data: predict_input):
     # text_array = [input_data.comment]
 
     # make prediction with the model
-    clean_input = utils.clean_text(input_data.comment)
+    processed_input = utils.preprocess_user_input(input_data.comment, tokenizer)
     #prediction = model.predict(utils.preprocess_user_input(input_data.comment, tokenizer))
     
     # write new log to logs file by calling write_logs function
     # utils.write_logs(input_data, prediction)
 
     # return the prediction from the model
-    return {'Predicted Probabilities': clean_input}
+    return {'Predicted Probabilities': processed_input}
