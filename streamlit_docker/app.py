@@ -58,7 +58,7 @@ user_input = st.text_input("insert comment")
 if st.button("predict"):
 
     user_input_cleaned = clean_text(user_input)
-    seq = tokenizer.text_to_sequences([user_input_cleaned])
+    seq = tokenizer.texts_to_sequences([user_input_cleaned])
     padded_seq = tf.keras.preprocessing.sequence.pad_sequences(seq, maxlen=300)
 
     prediction = model.predict(padded_seq)
