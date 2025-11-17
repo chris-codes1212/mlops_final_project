@@ -43,6 +43,8 @@ def clean_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
+st.title('Toxicity Analysis App')
+
 st.write("Loading production model...")
 
 ENTITY = 'chris-r-thompson1212-university-of-denver'
@@ -54,11 +56,33 @@ st.success("Model Loaded!")
 user_input = st.text_input("insert comment")
 
 if st.button("predict"):
-    st.text("making prediction...")
-    user_input_cleaned = clean(tes)
-    model.predict(tokenized_user_input)
-# from sklearn.metrics import accuracy_score, precision_score
 
-st.title('Toxicity Analysis App')
+    user_input_cleaned = clean_text(user_input)
+    seq = tokenizer.text_to_sequences([user_input_cleaned])
+    padded_seq = tf.keras.preprocessing.sequence.pad_sequences(seq, maxlen=300)
+
+    prediction = model.predict(padded_seq)
+    st.write("Predicted Probabilities:", prediction)
+
+
+# if comment:
+#     # Preprocess comment (clean + tokenize + pad)
+#     def clean_text(text):
+#         import re
+#         text = text.lower()
+#         text = re.sub(r'\s+', ' ', text).strip()
+#         return text
+
+#     MAX_LEN = 300  # same as training
+#     cleaned_comment = clean_text(comment)
+#     seq = tokenizer.texts_to_sequences([cleaned_comment])
+#     padded_seq = tf.keras.preprocessing.sequence.pad_sequences(seq, maxlen=MAX_LEN)
+
+#     # Predict
+#     prediction = model.predict(padded_seq)
+#     st.write("Predicted probabilities:", prediction)
+# # from sklearn.metrics import accuracy_score, precision_score
+
+
 
 # model = load_model('../model.keras')
