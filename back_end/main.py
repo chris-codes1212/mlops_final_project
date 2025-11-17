@@ -19,9 +19,20 @@ try:
     ENTITY = 'chris-r-thompson1212-university-of-denver'
     PROJECT = "toxic-comment-multilabel"
     model, tokenizer = utils.load_production_model_and_tokenizer(ENTITY, PROJECT)
-    print("Model Loaded Successfull")
+    print("Model Loaded Successfully")
 except FileNotFoundError:
-    print("Error: Model file 'sentiment_model.pkl' not found.")
+    print("Error: unable to load model or tokenizer pipeline")
+    model = None
+    tokenizer = None
+
+# try and load model data labels
+try:
+    ENTITY = 'chris-r-thompson1212-university-of-denver'
+    PROJECT = "toxic-comment-multilabel"
+    labels = utils.load_labels_from_dataset(ENTITY, PROJECT)
+    print("Data Labels Loaded Successfully")
+except FileNotFoundError:
+    print("Error: could not load data labels.")
     model = None
     tokenizer = None
 

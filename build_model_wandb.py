@@ -106,7 +106,7 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
     test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test)) \
         .batch(128).prefetch(tf.data.AUTOTUNE)
 
-    return train_ds, val_ds, test_ds, labels
+    return train_ds, val_ds, test_ds, labels, data_artifact
 
 def build_model(MAX_WORDS, MAX_LEN, labels):
     model = Sequential([
@@ -159,24 +159,63 @@ def evaluate_model(model, test_ds):
 
     return log_data
 
+# def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
+#     current_auc = test_results.get("test_auc", 0)
+
+#     # Get the current production artifact
+#     ENTITY = wandb.run.entity
+#     PROJECT = wandb.run.project
+#     api = wandb.Api()
+    
+#     try:
+#         prod_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:production")
+#         prod_auc = prod_artifact.metadata.get("test_auc", 0)
+#     except wandb.CommError:
+#         prod_auc = 0  # No production model exists yet
+
+#     if current_auc > prod_auc:
+#         print(f"Promoting model! AUC {current_auc:.4f} > {prod_auc:.4f}")
+
+#         # Create new artifact for this run
+#         model_artifact = wandb.Artifact(
+#             name=model_name,
+#             type="model",
+#             metadata=test_results
+#         )
+#         model_artifact.add_file("best_model.keras")
+
+#         # Log the artifact
+#         wandb.log_artifact(model_artifact)
+
+#         # Wait until artifact is fully logged
+#         model_artifact.wait()
+
+#         # Add the "production" alias
+#         model_artifact.aliases.append("production")
+#         model_artifact.save()
+#     else:
+#         print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
+
 def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
     current_auc = test_results.get("test_auc", 0)
+    dataset_version = test_results.get("dataset_artifact", None)
 
-    # Get the current production artifact
     ENTITY = wandb.run.entity
     PROJECT = wandb.run.project
     api = wandb.Api()
-    
+
     try:
         prod_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:production")
         prod_auc = prod_artifact.metadata.get("test_auc", 0)
+        prod_dataset = prod_artifact.metadata.get("dataset_artifact", None)
     except wandb.CommError:
-        prod_auc = 0  # No production model exists yet
+        prod_auc = 0
+        prod_dataset = None
 
     if current_auc > prod_auc:
         print(f"Promoting model! AUC {current_auc:.4f} > {prod_auc:.4f}")
 
-        # Create new artifact for this run
+        # Create new model artifact
         model_artifact = wandb.Artifact(
             name=model_name,
             type="model",
@@ -184,17 +223,23 @@ def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
         )
         model_artifact.add_file("best_model.keras")
 
+        # Tag with dataset version (ONLY IF it's the dataset used for production)
+        if dataset_version == prod_dataset:
+            model_artifact.aliases.append(f"trained-on-{dataset_version}")
+        else:
+            print("Not tagging dataset: new model used a different dataset version.")
+
         # Log the artifact
         wandb.log_artifact(model_artifact)
-
-        # Wait until artifact is fully logged
         model_artifact.wait()
 
-        # Add the "production" alias
+        # Promote to production
         model_artifact.aliases.append("production")
         model_artifact.save()
+
     else:
         print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
+
 
 def main():
 
@@ -215,7 +260,7 @@ def main():
     config = wandb.config
 
     # Load data
-    train_ds, val_ds, test_ds, labels = load_and_prepare_data(
+    train_ds, val_ds, test_ds, labels, data_artifact = load_and_prepare_data(
         "train.csv", config.MAX_WORDS, config.MAX_LEN
     )
 
@@ -230,6 +275,9 @@ def main():
     test_results = evaluate_model(model, test_ds)
     print(test_results)
 
+    # add current dataset_artifact key value pair to test_results for promote_best_model function
+    test_results["dataset_artifact"] = data_artifact
+
     # Create a model artifact
     model_artifact = wandb.Artifact(
         name="toxic-comment-multilabel",
@@ -241,7 +289,7 @@ def main():
     model_artifact.add_file("tokenizer.pkl") # now adding tokenizer pipeline
     wandb.log_artifact(model_artifact)
 
-    # Promote best model
+    # Promote best model and its associated dataset to production
     promote_best_model(test_results, wandb.run.project)
 
     wandb.finish()

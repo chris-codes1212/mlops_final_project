@@ -35,6 +35,19 @@ def load_production_model_and_tokenizer(entity, project, model_name="toxic-comme
 
     return model, tokenizer
 
+def load_labels_from_dataset(entity, project, data_set_name = "toxic-data"):
+    api = wandb.Api()
+
+    # Fetch latest dataset artifact
+    artifact = api.artifact(f"{entity}/{project}/{data_set_name}:latest", type="dataset")
+
+    # Load labels from metadata
+    labels = artifact.metadata.get("labels", None)
+
+    if labels is None:
+        raise ValueError("Dataset artifact does not contain label metadata")
+
+    return labels
 
 def clean_text(text):
     text = text.lower()
