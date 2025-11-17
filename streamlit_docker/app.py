@@ -8,7 +8,7 @@ import tensorflow as tf
 
 import wandb
 
-def load_production_model(entity, project, model_name="toxic-comment-classifier"):
+def load_production_model(entity, project, model_name="toxic-comment-multilabel"):
     # Authenticate using environment variable WANDB_API_KEY
     wandb.login()
 
