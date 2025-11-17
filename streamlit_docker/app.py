@@ -47,7 +47,7 @@ st.write("Loading production model...")
 
 ENTITY = 'chris-r-thompson1212-university-of-denver'
 PROJECT = "toxic-comment-multilabel"
-model, tokenizer = load_production_model(ENTITY, PROJECT)
+model, tokenizer = load_production_model_and_tokenizer(ENTITY, PROJECT)
 
 st.success("Model Loaded!")
 
