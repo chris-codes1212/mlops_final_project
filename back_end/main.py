@@ -90,9 +90,10 @@ async def make_prediction(input_data: predict_input):
 
     # get predicted lables (threshold >0.5)
     pred_labels = []
-    for label in pred_proba_dict:
-        if label.value > 0.5:
+    for label, prob in pred_proba_dict.items():
+        if prob > 0.5:
             pred_labels.append(label)
+
 
     # write log to DynamoDB
     write_logs.write_log(input_data, pred_labels, pred_proba_dict, labels)
