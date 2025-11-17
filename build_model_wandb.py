@@ -285,7 +285,7 @@ def main():
     print(test_results)
 
     # add current dataset_artifact key value pair to test_results for promote_best_model function
-    test_results["dataset_artifact"] = data_artifact
+    test_results["dataset_artifact"] = f"{data_artifact.entity}/{data_artifact.project}/{data_artifact.name}:latest"
 
     # Create a model artifact
     model_artifact = wandb.Artifact(
