@@ -33,9 +33,7 @@ try:
     print("Data Labels Loaded Successfully")
 except FileNotFoundError:
     print("Error: could not load data labels.")
-    model = None
-    tokenizer = None
-
+    labels = None
 
 # create a class for the /predict endpoint
 class predict_input(BaseModel):

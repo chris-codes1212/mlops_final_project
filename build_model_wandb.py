@@ -200,6 +200,7 @@ def evaluate_model(model, test_ds):
 #         print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
 
 def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
+    # get current test auc and the dataset used in this experiment
     current_auc = test_results.get("test_auc", 0)
     dataset_used = test_results.get("dataset_artifact", None)
 
@@ -207,7 +208,7 @@ def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
     PROJECT = wandb.run.project
     api = wandb.Api()
 
-    # Load current production model
+    # Load current production model and its test_auc score
     try:
         prod_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:production")
         prod_auc = prod_artifact.metadata.get("test_auc", 0)
@@ -235,6 +236,7 @@ def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
 
         print("Model promoted to :production")
 
+        # promote current data set to production if model was promoted to production
         if dataset_used is not None:
             try:
                 # This will fetch the artifact from the same project as the run
@@ -285,7 +287,7 @@ def main():
     print(test_results)
 
     # add current dataset_artifact key value pair to test_results for promote_best_model function
-    test_results["dataset_artifact"] = f"{logged_data_artifact.name}:latest"
+    test_results["dataset_artifact"] = f"{logged_data_artifact}:latest"
     
     # Create a model artifact
     model_artifact = wandb.Artifact(
