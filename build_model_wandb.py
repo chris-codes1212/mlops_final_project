@@ -42,6 +42,13 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
     # get labels
     labels = train_df.drop(columns=['id','comment_text']).columns.to_list()
 
+    # Log dataset as an artifact
+    data_artifact = wandb.Artifact("toxic-data", type="dataset")
+    data_artifact.add_file(file_path)
+    # log labels as dataset artifact metadata
+    data_artifact.metadata = {"labels": labels}
+    wandb.log_artifact(data_artifact)
+
     # create Keras tokenizer and set num_words parameter
     tokenizer = Tokenizer(num_words=MAX_WORDS)
     
@@ -52,7 +59,7 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
         # --- Save tokenizer for inference ---
     with open("tokenizer.pkl", "wb") as f:
         pickle.dump(tokenizer, f)
-        
+
     X_data = pad_sequences(
         tokenizer.texts_to_sequences(cleaned_comments),
         maxlen=MAX_LEN
@@ -206,11 +213,6 @@ def main():
         }
     )
     config = wandb.config
-
-    # Log dataset as an artifact
-    data_artifact = wandb.Artifact("toxic-data", type="dataset")
-    data_artifact.add_file("train.csv")
-    wandb.log_artifact(data_artifact)
 
     # Load data
     train_ds, val_ds, test_ds, labels = load_and_prepare_data(
