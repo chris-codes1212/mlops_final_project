@@ -199,10 +199,10 @@ def evaluate_model(model, test_ds):
 #     else:
 #         print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
 
-def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
+def promote_best_model(test_results, logged_dataset_artifact, logged_model_artifact, model_name="toxic-comment-multilabel"):
     # get current test auc and the dataset used in this experiment
     current_auc = test_results.get("test_auc", 0)
-    dataset_used = test_results.get("dataset_artifact", None)
+    # dataset_used = test_results.get("dataset_artifact", None)
 
     ENTITY = wandb.run.entity
     PROJECT = wandb.run.project
@@ -219,34 +219,34 @@ def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
     if current_auc > prod_auc:
         print(f"Promoting model! AUC {current_auc:.4f} > {prod_auc:.4f}")
 
-        # --- Promote MODEL ---
-        model_artifact = wandb.Artifact(
-            name=model_name,
-            type="model",
-            metadata=test_results
-        )
-        model_artifact.add_file("best_model.keras")
+        # # --- Promote MODEL ---
+        # model_artifact = wandb.Artifact(
+        #     name=model_name,
+        #     type="model",
+        #     metadata=test_results
+        # )
+        # model_artifact.add_file("best_model.keras")
 
-        logged_artifact = wandb.log_artifact(model_artifact)
-        logged_artifact.wait()
+        # logged_artifact = wandb.log_artifact(model_artifact)
+        # logged_artifact.wait()
 
         # Tag the model "production"
-        logged_artifact.aliases.append("production")
-        logged_artifact.save()
+        logged_model_artifact.aliases.append("production")
+        logged_model_artifact.save()
 
         print("Model promoted to :production")
 
         # promote current data set to production if model was promoted to production
-        if dataset_used is not None:
+        if logged_dataset_artifact is not None:
             try:
                 # This will fetch the artifact from the same project as the run
-                dataset_artifact = api.artifact(dataset_used)
-                dataset_artifact.aliases.append("production")
-                dataset_artifact.save()
-                print(f"Dataset {dataset_used} also tagged as :production")
+                # dataset_artifact = api.artifact(dataset_used)
+                logged_dataset_artifact.aliases.append("production")
+                # dataset_artifact.save()
+                print("Dataset also tagged as production")
 
             except wandb.CommError:
-                print(f"Warning: Could not load dataset artifact {dataset_used}")
+                print(f"Warning: Could not load dataset artifact")
 
     else:
         print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
@@ -271,7 +271,7 @@ def main():
     config = wandb.config
 
     # Load data
-    train_ds, val_ds, test_ds, labels, logged_data_artifact = load_and_prepare_data(
+    train_ds, val_ds, test_ds, labels, logged_dataset_artifact = load_and_prepare_data(
         "train.csv", config.MAX_WORDS, config.MAX_LEN
     )
 
@@ -285,9 +285,6 @@ def main():
     # Evaluate and log to wandb
     test_results = evaluate_model(model, test_ds)
     print(test_results)
-
-    # add current dataset_artifact key value pair to test_results for promote_best_model function
-    test_results["dataset_artifact"] = f"{logged_data_artifact}:latest"
     
     # Create a model artifact
     model_artifact = wandb.Artifact(
@@ -298,10 +295,11 @@ def main():
 
     model_artifact.add_file("best_model.keras")  # already saved by ModelCheckpoint
     model_artifact.add_file("tokenizer.pkl") # now adding tokenizer pipeline
-    wandb.log_artifact(model_artifact)
+    logged_model_artifact = wandb.log_artifact(model_artifact)
+    logged_model_artifact.wait()
 
     # Promote best model and its associated dataset to production
-    promote_best_model(test_results, wandb.run.project)
+    promote_best_model(test_results, logged_dataset_artifact, logged_model_artifact, wandb.run.project)
 
     wandb.finish()
 
