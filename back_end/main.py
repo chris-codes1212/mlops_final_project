@@ -84,8 +84,9 @@ async def make_prediction(input_data: predict_input):
 
     # create dictionary of prediction probabilities
     pred_proba_dict = {}
-    for i in labels:
-        pred_proba_dict[i] = prediction_list[0][i]
+    for idx, label in enumerate(labels):
+        pred_proba_dict[label] = prediction_list[0][idx]
+
 
     # get predicted lables (threshold >0.5)
     pred_labels = []
