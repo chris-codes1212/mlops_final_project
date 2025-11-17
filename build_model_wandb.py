@@ -42,12 +42,15 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
     # get labels
     labels = train_df.drop(columns=['id','comment_text']).columns.to_list()
 
-    # Log dataset as an artifact
+    # create dataset artifact
     data_artifact = wandb.Artifact("toxic-data", type="dataset")
     data_artifact.add_file(file_path)
-    # log labels as dataset artifact metadata
+    # add labels as dataset artifact metadata
     data_artifact.metadata = {"labels": labels}
-    wandb.log_artifact(data_artifact)
+    
+    # log the dataset artifact
+    logged_data_artifact = wandb.log_artifact(data_artifact)
+    logged_data_artifact.wait()
 
     # create Keras tokenizer and set num_words parameter
     tokenizer = Tokenizer(num_words=MAX_WORDS)
@@ -106,7 +109,7 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
     test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test)) \
         .batch(128).prefetch(tf.data.AUTOTUNE)
 
-    return train_ds, val_ds, test_ds, labels, data_artifact
+    return train_ds, val_ds, test_ds, labels, logged_data_artifact
 
 def build_model(MAX_WORDS, MAX_LEN, labels):
     model = Sequential([
@@ -262,14 +265,14 @@ def main():
             "lstm_units": 64,
             "dropout": 0.3,
             "batch_size": 128,
-            "epochs": 2,
+            "epochs": 3,
             "optimizer": "adam"
         }
     )
     config = wandb.config
 
     # Load data
-    train_ds, val_ds, test_ds, labels, data_artifact = load_and_prepare_data(
+    train_ds, val_ds, test_ds, labels, logged_data_artifact = load_and_prepare_data(
         "train.csv", config.MAX_WORDS, config.MAX_LEN
     )
 
@@ -285,7 +288,7 @@ def main():
     print(test_results)
 
     # add current dataset_artifact key value pair to test_results for promote_best_model function
-    test_results["dataset_artifact"] = f"{data_artifact.entity}/{data_artifact.project}/{data_artifact.name}:latest"
+    test_results["dataset_artifact"] = f"{logged_data_artifact.entity}/{logged_data_artifact.project}/{logged_data_artifact.name}:latest"
 
     # Create a model artifact
     model_artifact = wandb.Artifact(
