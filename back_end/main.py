@@ -99,4 +99,4 @@ async def make_prediction(input_data: predict_input):
     write_logs.write_log(input_data, pred_labels, pred_proba_dict, labels)
 
     # return the prediction from the model
-    return {labels: pred_labels}
+    return {"labels": pred_labels}
