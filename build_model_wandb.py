@@ -16,6 +16,8 @@ from skmultilearn.model_selection import iterative_train_test_split
 
 import numpy as np
 
+import pickle
+
 import wandb
 from wandb.integration.keras import WandbCallback
 from wandb.integration.keras import WandbMetricsLogger
@@ -47,11 +49,15 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
 
     tokenizer.fit_on_texts(cleaned_comments)
 
+        # --- Save tokenizer for inference ---
+    with open("tokenizer.pkl", "wb") as f:
+        pickle.dump(tokenizer, f)
+        
     X_data = pad_sequences(
         tokenizer.texts_to_sequences(cleaned_comments),
         maxlen=MAX_LEN
         )
-
+    
     # select the label columns for our y_train ds and convert to numpy matrix where each row corresponds to a single comments labels
     # make data type float for gradient calculation and creating sample weights
     y_data = train_df[labels].values.astype('float32')
@@ -230,6 +236,7 @@ def main():
     )
 
     model_artifact.add_file("best_model.keras")  # already saved by ModelCheckpoint
+    model_artifact.add_file("tokenizer.pkl") # now adding tokenizer pipeline
     wandb.log_artifact(model_artifact)
 
     # Promote best model
