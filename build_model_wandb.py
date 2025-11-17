@@ -198,24 +198,24 @@ def evaluate_model(model, test_ds):
 
 def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
     current_auc = test_results.get("test_auc", 0)
-    dataset_version = test_results.get("dataset_artifact", None)
+    dataset_used = test_results.get("dataset_artifact", None)
 
     ENTITY = wandb.run.entity
     PROJECT = wandb.run.project
     api = wandb.Api()
 
+    # Load current production model
     try:
         prod_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:production")
         prod_auc = prod_artifact.metadata.get("test_auc", 0)
-        prod_dataset = prod_artifact.metadata.get("dataset_artifact", None)
     except wandb.CommError:
-        prod_auc = 0
-        prod_dataset = None
+        prod_auc = 0  # If no production model exists yet
 
+    # Compare metrics
     if current_auc > prod_auc:
         print(f"Promoting model! AUC {current_auc:.4f} > {prod_auc:.4f}")
 
-        # Create new model artifact
+        # --- Promote MODEL ---
         model_artifact = wandb.Artifact(
             name=model_name,
             type="model",
@@ -223,19 +223,28 @@ def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
         )
         model_artifact.add_file("best_model.keras")
 
-        # Tag with dataset version (ONLY IF it's the dataset used for production)
-        if dataset_version == prod_dataset:
-            model_artifact.aliases.append(f"trained-on-{dataset_version}")
-        else:
-            print("Not tagging dataset: new model used a different dataset version.")
+        logged_artifact = wandb.log_artifact(model_artifact)
+        logged_artifact.wait()
 
-        # Log the artifact
-        wandb.log_artifact(model_artifact)
-        model_artifact.wait()
+        # Tag the model "production"
+        logged_artifact.aliases.append("production")
+        logged_artifact.save()
 
-        # Promote to production
-        model_artifact.aliases.append("production")
-        model_artifact.save()
+        print("Model promoted to :production")
+
+        # --- Promote DATASET (the one that trained this model) ---
+        if dataset_used is not None:
+            try:
+                dataset_artifact = api.artifact(dataset_used)
+
+                # Add "production" alias to the dataset
+                dataset_artifact.aliases.append("production")
+                dataset_artifact.save()
+
+                print(f"Dataset {dataset_used} also tagged as :production")
+
+            except wandb.CommError:
+                print(f"Warning: Could not load dataset artifact {dataset_used}")
 
     else:
         print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
