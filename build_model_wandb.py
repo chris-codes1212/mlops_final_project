@@ -235,15 +235,12 @@ def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
 
         print("Model promoted to :production")
 
-        # --- Promote DATASET (the one that trained this model) ---
         if dataset_used is not None:
             try:
+                # This will fetch the artifact from the same project as the run
                 dataset_artifact = api.artifact(dataset_used)
-
-                # Add "production" alias to the dataset
                 dataset_artifact.aliases.append("production")
                 dataset_artifact.save()
-
                 print(f"Dataset {dataset_used} also tagged as :production")
 
             except wandb.CommError:
@@ -288,8 +285,8 @@ def main():
     print(test_results)
 
     # add current dataset_artifact key value pair to test_results for promote_best_model function
-    test_results["dataset_artifact"] = f"{logged_data_artifact.entity}/{logged_data_artifact.project}/{logged_data_artifact.name}:latest"
-
+    test_results["dataset_artifact"] = f"{logged_data_artifact.name}:latest"
+    
     # Create a model artifact
     model_artifact = wandb.Artifact(
         name="toxic-comment-multilabel",
