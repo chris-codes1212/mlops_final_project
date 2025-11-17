@@ -41,6 +41,10 @@ model = load_production_model(ENTITY, PROJECT)
 
 st.success("Model Loaded!")
 
+user_input = st.text_input("insert comment")
+
+if st.button("predict"):
+    st.text("making prediction...")
 # from sklearn.metrics import accuracy_score, precision_score
 
 st.title('Toxicity Analysis App')
