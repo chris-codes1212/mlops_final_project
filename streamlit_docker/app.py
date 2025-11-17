@@ -36,7 +36,7 @@ def load_production_model(entity, project, model_name="toxic-comment-classifier"
 st.write("Loading production model...")
 
 ENTITY = 'chris-r-thompson1212-university-of-denver'
-PROJECT = "toxic-comment-classifier"
+PROJECT = "toxic-comment-multilabel"
 model = load_production_model(ENTITY, PROJECT)
 
 st.success("Model Loaded!")
