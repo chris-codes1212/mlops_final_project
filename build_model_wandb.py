@@ -16,6 +16,10 @@ from skmultilearn.model_selection import iterative_train_test_split
 
 import numpy as np
 
+import wandb
+from wandb.integration.keras import WandbCallback
+from wandb.integration.keras import WandbMetricsLogger
+
 np.random.seed(42) # NEVER change this line
 
 tf.keras.mixed_precision.set_global_policy('mixed_float16')
@@ -79,12 +83,6 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
             y_train[:, i] * class_weights[i] + 
             (1 - y_train[:, i]) * 1.0  
             )
-        
-        #sample_weights[:, i] = y_train[:, i] * class_weights[i]
-
-
-
-
 
     sample_weights_flat = np.mean(sample_weights, axis=1).astype('float32')
 
@@ -96,26 +94,6 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
         .batch(128).prefetch(tf.data.AUTOTUNE)
 
     return train_ds, val_ds, test_ds, labels
-
-
-# create funciton to build our deep learning model
-# def build_model(MAX_WORDS, MAX_LEN, labels):
-#     model = Sequential([
-#         Embedding(input_dim=MAX_WORDS + 1, output_dim=128, input_length=MAX_LEN),
-#         LSTM(128, recurrent_activation='sigmoid', use_bias=True),
-#         Dropout(0.2),
-#         Dense(len(labels), activation='sigmoid', dtype='float32')
-#     ])
-
-#     model.compile(
-#         optimizer='adam',
-#         loss='binary_crossentropy',
-#         metrics=['accuracy']  # list or dict matching output names
-#     )
-    
-#     return model
-
-
 
 def build_model(MAX_WORDS, MAX_LEN, labels):
     model = Sequential([
@@ -129,57 +107,135 @@ def build_model(MAX_WORDS, MAX_LEN, labels):
 
 
     model.compile(
-        optimizer='adam',
-        loss='binary_crossentropy',
-        metrics=[tf.keras.metrics.AUC(curve="ROC", multi_label=True)]
+        optimizer="adam",
+        loss="binary_crossentropy",
+        metrics=[tf.keras.metrics.AUC(name="auc", multi_label=True)]
     )
     return model
+
 
 
 def build_callbacks():
     callbacks = [
         ModelCheckpoint("best_model.keras", monitor="val_loss", save_best_only=True, save_weights_only=False),
         ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_lr=1e-6),
-        EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
+        EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True),
+        WandbMetricsLogger()
+        # WandbCallback(log_weights=True, log_graph=False)
     ]
 
     return callbacks
 
-def fit_model(model, train_ds, val_ds, callbacks):
+def fit_model(model, train_ds, val_ds, epochs, callbacks):
     history = model.fit(
         train_ds,
         validation_data=val_ds,
-        epochs=20,
+        epochs=epochs,
         callbacks=callbacks
     )
 
     return model, history
 
 def evaluate_model(model, test_ds):
-    results = model.evaluate(test_ds)
-    return results
+    loss, auc = model.evaluate(test_ds)
+
+    # Log to wandb
+    log_data = {"test_loss": loss}
+    log_data["test_auc"] = auc
+    wandb.log(log_data)
+
+    return log_data
+
+def promote_best_model(test_results, model_name="toxic-comment-classifier"):
+    current_auc = test_results.get("test_auc", 0)
+
+    # Get the current production artifact
+    ENTITY = wandb.run.entity
+    PROJECT = wandb.run.project
+    api = wandb.Api()
+    
+    try:
+        prod_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:production")
+        prod_auc = prod_artifact.metadata.get("test_auc", 0)
+    except wandb.CommError:
+        prod_auc = 0  # No production model exists yet
+
+    if current_auc > prod_auc:
+        print(f"Promoting model! AUC {current_auc:.4f} > {prod_auc:.4f}")
+
+        # Create new artifact for this run
+        model_artifact = wandb.Artifact(
+            name=model_name,
+            type="model",
+            metadata=test_results
+        )
+        model_artifact.add_file("best_model.keras")
+
+        # Log the artifact
+        wandb.log_artifact(model_artifact)
+
+        # Wait until artifact is fully logged
+        model_artifact.wait()
+
+        # Add the "production" alias
+        model_artifact.aliases.append("production")
+        model_artifact.save()
+    else:
+        print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
 
 def main():
 
-    # Get the 20000 most common words to tokenize
-    MAX_WORDS = 20000
-    # For each comment, we want the length to be 200. If it is more, it will be cut short, if it is less, it will be padded
-    MAX_LEN = 300
+    # --- W&B Init ---
+    wandb.init(
+        project="toxic-comment-multilabel",
+        config={
+            "MAX_WORDS": 20000,
+            "MAX_LEN": 300,
+            "embedding_dim": 200,
+            "lstm_units": 64,
+            "dropout": 0.3,
+            "batch_size": 128,
+            "epochs": 20,
+            "optimizer": "adam"
+        }
+    )
+    config = wandb.config
 
-    # get training, validation, and test data (tensorflow dataset objects)
-    train_ds, val_ds, test_ds, labels = load_and_prepare_data('train.csv', MAX_WORDS, MAX_LEN)
+    # Log dataset as an artifact
+    data_artifact = wandb.Artifact("toxic-data", type="dataset")
+    data_artifact.add_file("train.csv")
+    wandb.log_artifact(data_artifact)
 
-    model = build_model(MAX_WORDS, MAX_LEN, labels)
+    # Load data
+    train_ds, val_ds, test_ds, labels = load_and_prepare_data(
+        "train.csv", config.MAX_WORDS, config.MAX_LEN
+    )
 
+    # Build model using hyperparams from wandb.config
+    model = build_model(config.MAX_WORDS, config.MAX_LEN, labels)
+
+    # Train
     callbacks = build_callbacks()
+    model, history = fit_model(model, train_ds, val_ds, config.epochs, callbacks)
 
-    model, history = fit_model(model, train_ds, val_ds, callbacks)
-
-    # imported_model = keras.models.load_model("model.keras")
-    
+    # Evaluate and log to wandb
     test_results = evaluate_model(model, test_ds)
-
     print(test_results)
+
+    # Create a model artifact
+    model_artifact = wandb.Artifact(
+        name="toxic-comment-classifier",
+        type="model",
+        metadata=test_results
+    )
+
+    model_artifact.add_file("best_model.keras")  # already saved by ModelCheckpoint
+    wandb.log_artifact(model_artifact)
+
+    # Promote best model
+    promote_best_model(test_results, wandb.run.project)
+
+    wandb.finish()
 
 
 if __name__ == "__main__":
