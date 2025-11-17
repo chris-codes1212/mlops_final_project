@@ -146,7 +146,7 @@ def evaluate_model(model, test_ds):
 
     return log_data
 
-def promote_best_model(test_results, model_name="toxic-comment-classifier"):
+def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
     current_auc = test_results.get("test_auc", 0)
 
     # Get the current production artifact
@@ -195,7 +195,7 @@ def main():
             "lstm_units": 64,
             "dropout": 0.3,
             "batch_size": 128,
-            "epochs": 20,
+            "epochs": 1,
             "optimizer": "adam"
         }
     )
@@ -224,7 +224,7 @@ def main():
 
     # Create a model artifact
     model_artifact = wandb.Artifact(
-        name="toxic-comment-classifier",
+        name="toxic-comment-multilabel",
         type="model",
         metadata=test_results
     )
