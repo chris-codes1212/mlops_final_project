@@ -1,5 +1,5 @@
 import boto3
-import datetime
+from datetime import datetime
 
 # connect to DynamoDB table
 dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
