@@ -29,6 +29,10 @@ if st.button("Predict"):
         response = requests.post(back_end_url, json=payload, timeout=5)
         response.raise_for_status()  # raise exception for HTTP errors
         json_response = response.json()
-        st.write(json_response['labels'][0])
+        labels_list = json_response['labels']
+        if len(labels_list) == 0:
+            st.write("This comment is non-toxic")
+        else:
+            st.write(f'This comment is: {labels_list}')
     except requests.exceptions.RequestException as e:
         st.error(f"Error connecting to backend: {e}")
