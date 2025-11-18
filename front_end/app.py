@@ -4,6 +4,7 @@ import seaborn as sns
 import pandas as pd
 import tensorflow as tf
 import requests
+import json
 import wandb
 import pickle
 import re
@@ -17,13 +18,14 @@ if st.button("predict"):
     try:
         # make call to /predict endpoint
         response = requests.post(back_end_url, json=payload)
+        json_response = json.loads(response._content.decode("utf-8"))
 
     except requests.exceptions.RequestException as e:
         st.text(f"An error occurred: {e}")
         response = "No response from back end"
 
     # prediction = model.predict(padded_seq)
-    st.write(response)
+    st.write(json_response)
 
 
 # if comment:
