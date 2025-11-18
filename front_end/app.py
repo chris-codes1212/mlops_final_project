@@ -29,6 +29,6 @@ if st.button("Predict"):
         response = requests.post(back_end_url, json=payload, timeout=5)
         response.raise_for_status()  # raise exception for HTTP errors
         json_response = response.json()
-        st.write(json_response['labels'])
+        st.write(json_response['labels'][0])
     except requests.exceptions.RequestException as e:
         st.error(f"Error connecting to backend: {e}")
