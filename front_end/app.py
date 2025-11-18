@@ -33,6 +33,7 @@ if st.button("Predict"):
         if len(labels_list) == 0:
             st.write("This comment is non-toxic")
         else:
-            st.write(f'This comment is: {labels_list}')
+            labels_str = ", ".join(label.capitalize() for label in labels_list)
+            st.write(f"This comment is classified as: {labels_str}")
     except requests.exceptions.RequestException as e:
         st.error(f"Error connecting to backend: {e}")
