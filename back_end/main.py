@@ -39,16 +39,6 @@ except FileNotFoundError:
 # create a class for the /predict endpoint
 class predict_input(BaseModel):
     comment: str
-    # true_label: str
-
-# create a class for the logs we will create
-# class log(BaseModel):
-#     timestamp: datetime
-#     request_text: str
-#     # predicted_label: str
-#     # true_label: str
-
-
 
 # create startup event to print if model is not loaded
 @app.on_event("startup")
@@ -71,9 +61,6 @@ async def make_prediction(input_data: predict_input):
             status_code = status.HTTP_503_SERVICE_UNAVAILABLE,
             detail = 'Model is not loaded. Cannot make predictions'
         )
-    
-    # # turn input text into an array of words for correct model input data type
-    # text_array = [input_data.comment]
 
     # make prediction with the model
     # processed_input = utils.preprocess_user_input(input_data.comment, tokenizer)
