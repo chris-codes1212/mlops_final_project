@@ -11,7 +11,7 @@ import re
 
 # create title and subtitle
 st.title("Comment Toxicity Classifier")
-st.subheader("A site to grade the toxicity of online comments")
+st.subheader("An app to grade the toxicity of online comments")
 st.text("Enter a comment in the text box below. Press 'Submit' after typing a comment. You will see what classes of toxicity your comment falls into")
 
 # set url for the backend api (FastAPI) to make requests to
@@ -21,7 +21,7 @@ back_end_url = "http://44.202.157.103:8000/predict"
 user_input = st.text_input("Insert comment")
 
 # if the user presses the 'Submit' button, we will give the user predictions for the toxicity labels of their comment
-if st.button("Predict"):
+if st.button("Submit"):
     # create payload which needs to be in json format
     payload = {"comment": user_input}
     # try to call the /predict Fastapi endpoint with the new comment
@@ -31,9 +31,9 @@ if st.button("Predict"):
         json_response = response.json()
         labels_list = json_response['labels']
         if len(labels_list) == 0:
-            st.write("This comment is non-toxic")
+            st.subheader("This comment is :green[non-toxic]")
         else:
             labels_str = ", ".join(label.capitalize() for label in labels_list)
-            st.write(f"This comment is classified as: {labels_str}")
+            st.subheader(f"This comment is classified as :red[{labels_str}]")
     except requests.exceptions.RequestException as e:
         st.error(f"Error connecting to backend: {e}")
