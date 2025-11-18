@@ -9,23 +9,20 @@ import wandb
 import pickle
 import re
 
-back_end_url =  "http://44.202.157.103:8000/predict" 
+back_end_url = "http://44.202.157.103:8000/predict"
 
-user_input = st.text_input("insert comment")
+user_input = st.text_input("Insert comment")
 
-if st.button("predict"):
-    payload = {'comment': user_input}
+if st.button("Predict"):
+    payload = {"comment": user_input}
     try:
-        # make call to /predict endpoint
-        response = requests.post(back_end_url, json=payload)
-        json_response = json.loads(response._content.decode("utf-8"))
-
+        response = requests.post(back_end_url, json=payload, timeout=5)
+        response.raise_for_status()  # raise exception for HTTP errors
+        json_response = response.json()
+        st.write(json_response)
     except requests.exceptions.RequestException as e:
-        st.text(f"An error occurred: {e}")
-        response = "No response from back end"
+        st.error(f"Error connecting to backend: {e}")
 
-    # prediction = model.predict(padded_seq)
-    st.write(json_response)
 
 
 # if comment:
