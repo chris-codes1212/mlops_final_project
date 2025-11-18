@@ -10,8 +10,8 @@ def write_log(input_data, pred_labels, pred_proba_dict, labels=None):
 
     # send log to DynamoDB
     table.put_item(Item={"timestamp": datetime.now().astimezone().isoformat(), 
-                         "comment": input_data.comment
-                        #  "predicted_labels": pred_proba_dict,
+                         "comment": input_data.comment,
+                         "predicted_labels": pred_proba_dict
                         #  "prediction_proba": pred_labels
                          })
     
