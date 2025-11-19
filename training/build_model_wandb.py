@@ -1,7 +1,6 @@
 import re
-
+import boto3
 import pandas as pd
-
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -18,6 +17,8 @@ import numpy as np
 
 import pickle
 
+import os
+
 import wandb
 from wandb.integration.keras import WandbCallback
 from wandb.integration.keras import WandbMetricsLogger
@@ -32,11 +33,29 @@ def clean_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
+def load_data():
+
+    # Initialize S3 client (EC2 role credentials will be used automatically)
+    s3 = boto3.client('s3')
+
+    # S3 path
+    bucket_name = "toxic-comment-classifier-training-data"
+    key = "train.csv"
+
+    # Local filename to save as (current directory)
+    data_file_path = os.path.join(os.getcwd(), "train.csv")
+
+    # Download
+    s3.download_file(bucket_name, key, data_file_path)
+
+    return data_file_path
 
 # load data and create tensorflow dataset objects for train, val, and test data sets
-def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
+def prepare_data(file_path, MAX_WORDS, MAX_LEN):
 
     # import data
+
+    # Make sure s3fs is installed: pip install s3fs
     train_df = pd.read_csv(file_path, engine='python')
 
     # get labels
@@ -92,7 +111,6 @@ def load_and_prepare_data(file_path, MAX_WORDS, MAX_LEN):
 
     class_weights = {i: total_samples / (len(labels) * class_totals[i]) for i in range(len(labels))}
 
-    # new
     sample_weights = np.ones_like(y_train, dtype='float32')
     for i in range(len(labels)):
         sample_weights[:, i] = (
@@ -162,44 +180,8 @@ def evaluate_model(model, test_ds):
 
     return log_data
 
-# def promote_best_model(test_results, model_name="toxic-comment-multilabel"):
-#     current_auc = test_results.get("test_auc", 0)
-
-#     # Get the current production artifact
-#     ENTITY = wandb.run.entity
-#     PROJECT = wandb.run.project
-#     api = wandb.Api()
-    
-#     try:
-#         prod_artifact = api.artifact(f"{ENTITY}/{PROJECT}/{model_name}:production")
-#         prod_auc = prod_artifact.metadata.get("test_auc", 0)
-#     except wandb.CommError:
-#         prod_auc = 0  # No production model exists yet
-
-#     if current_auc > prod_auc:
-#         print(f"Promoting model! AUC {current_auc:.4f} > {prod_auc:.4f}")
-
-#         # Create new artifact for this run
-#         model_artifact = wandb.Artifact(
-#             name=model_name,
-#             type="model",
-#             metadata=test_results
-#         )
-#         model_artifact.add_file("best_model.keras")
-
-#         # Log the artifact
-#         wandb.log_artifact(model_artifact)
-
-#         # Wait until artifact is fully logged
-#         model_artifact.wait()
-
-#         # Add the "production" alias
-#         model_artifact.aliases.append("production")
-#         model_artifact.save()
-#     else:
-#         print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
-
 def promote_best_model(test_results, logged_dataset_artifact, logged_model_artifact, model_name="toxic-comment-multilabel"):
+    
     # get current test auc and the dataset used in this experiment
     current_auc = test_results.get("test_auc", 0)
     # dataset_used = test_results.get("dataset_artifact", None)
@@ -219,17 +201,6 @@ def promote_best_model(test_results, logged_dataset_artifact, logged_model_artif
     if current_auc > prod_auc:
         print(f"Promoting model! AUC {current_auc:.4f} > {prod_auc:.4f}")
 
-        # # --- Promote MODEL ---
-        # model_artifact = wandb.Artifact(
-        #     name=model_name,
-        #     type="model",
-        #     metadata=test_results
-        # )
-        # model_artifact.add_file("best_model.keras")
-
-        # logged_artifact = wandb.log_artifact(model_artifact)
-        # logged_artifact.wait()
-
         # Tag the model "production"
         logged_model_artifact.aliases.append("production")
         logged_model_artifact.save()
@@ -240,9 +211,9 @@ def promote_best_model(test_results, logged_dataset_artifact, logged_model_artif
         if logged_dataset_artifact is not None:
             try:
                 # This will fetch the artifact from the same project as the run
-                # dataset_artifact = api.artifact(dataset_used)
+    
                 logged_dataset_artifact.aliases.append("production")
-                # dataset_artifact.save()
+               
                 print("Dataset also tagged as production")
 
             except wandb.CommError:
@@ -250,6 +221,26 @@ def promote_best_model(test_results, logged_dataset_artifact, logged_model_artif
 
     else:
         print(f"Model not better than current production (AUC {prod_auc:.4f}). No promotion.")
+
+
+def remove_files(model_path, tokenizer_path, data_file_path):
+    if os.path.exists(model_path):
+        os.remove(model_path)
+        print("Model file deleted successfully")
+    else:
+        print("Model file does not exist")
+
+    if os.path.exists(tokenizer_path):
+        os.remove(tokenizer_path)
+        print("Tokenizer file deleted successfully")
+    else:
+        print("Tokenizer file does not exist")
+
+    if os.path.exists(data_file_path):
+        os.remove(data_file_path)
+        print("Data file deleted successfully")
+    else:
+        print("Data file does not exist")   
 
 
 def main():
@@ -270,15 +261,18 @@ def main():
     )
     config = wandb.config
 
-    # Load data
-    train_ds, val_ds, test_ds, labels, logged_dataset_artifact = load_and_prepare_data(
-        "train.csv", config.MAX_WORDS, config.MAX_LEN
+    # load data from s3
+    data_file_path = load_data()
+    
+    # Prepare data for model training
+    train_ds, val_ds, test_ds, labels, logged_dataset_artifact = prepare_data(
+        data_file_path, config.MAX_WORDS, config.MAX_LEN
     )
 
     # Build model using hyperparams from wandb.config
     model = build_model(config.MAX_WORDS, config.MAX_LEN, labels)
 
-    # Train
+    # Train model
     callbacks = build_callbacks()
     model, history = fit_model(model, train_ds, val_ds, config.epochs, callbacks)
 
@@ -302,6 +296,9 @@ def main():
     promote_best_model(test_results, logged_dataset_artifact, logged_model_artifact, wandb.run.project)
 
     wandb.finish()
+
+    # remove model and tokenizer files from disk
+    remove_files("best_model.keras", "tokenizer.pkl", data_file_path)
 
 
 if __name__ == "__main__":
