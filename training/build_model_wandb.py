@@ -21,9 +21,36 @@ np.random.seed(42) # NEVER change this line
 tf.keras.mixed_precision.set_global_policy('mixed_float16')
 
 # create function to clearn the input text
+# def clean_text(text):
+#     text = text.lower()
+#     text = re.sub(r'\s+', ' ', text).strip()
+#     return text
+
 def clean_text(text):
+    if not isinstance(text, str):
+        return ""
+
+    # lower-case
     text = text.lower()
-    text = re.sub(r'\s+', ' ', text).strip()
+
+    # remove wiki headings like "== something =="
+    text = re.sub(r"==+[^=]+==+", " ", text)
+
+    # remove bullet markers like "*" at beginning of line
+    text = re.sub(r"^\s*\*\s*", " ", text)
+
+    # remove weird triple quotes and repeated quotes
+    text = text.replace('"""', ' ').replace("''", " ")
+
+    # remove stray slashes used by wiki formatting
+    text = re.sub(r"\s*/\s*", " ", text)
+
+    # normalize punctuation spacing
+    text = re.sub(r"([.,!?;:]){2,}", r" \1 ", text)
+
+    # normalize whitespace
+    text = re.sub(r"\s+", " ", text).strip()
+
     return text
 
 def load_data():
