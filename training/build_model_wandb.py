@@ -2,23 +2,16 @@ import re
 import boto3
 import pandas as pd
 import tensorflow as tf
-from tensorflow import keras
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.layers import Bidirectional, GlobalMaxPooling1D
-
-from sklearn.model_selection import train_test_split
 from skmultilearn.model_selection import iterative_train_test_split
-
 import numpy as np
-
 import pickle
-
 import os
-
 import wandb
 from wandb.integration.keras import WandbCallback
 from wandb.integration.keras import WandbMetricsLogger
