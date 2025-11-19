@@ -1,0 +1,9 @@
+boto3==1.40.74
+fastapi==0.121.2
+matplotlib==3.10.7
+pandas==2.3.3
+pydantic==2.12.4
+scikit_learn==1.7.2
+seaborn==0.13.2
+tensorflow==2.20.0
+wandb==0.23.0
