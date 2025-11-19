@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+
+  monitoring:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: monitoring
+    ports:
+      - "8501:8501"
+    restart: always
+    volumes:
+      - .:/app
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
