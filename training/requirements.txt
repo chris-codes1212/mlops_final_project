@@ -1,0 +1,5 @@
+boto3==1.40.70
+numpy==2.3.5
+pandas==2.3.3
+scikit_multilearn==0.2.0
+tensorflow==2.20.0
