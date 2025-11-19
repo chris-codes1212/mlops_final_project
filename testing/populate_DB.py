@@ -5,8 +5,6 @@ from sklearn.metrics import accuracy_score
 import boto3
 import os
 
-import re
-
 def load_data(): 
     # Initialize S3 client (EC2 role credentials will be used automatically)
     s3 = boto3.client('s3')
@@ -28,42 +26,6 @@ data_file_path = load_data()
 df = pd.read_csv(data_file_path)
 
 df = df.sample(n=1000, random_state=40) 
-
-df.head()
-
-import re
-
-def clean_text(text):
-    if not isinstance(text, str):
-        return ""
-
-    # lower-case
-    text = text.lower()
-
-    # remove wiki headings like "== something =="
-    text = re.sub(r"==+[^=]+==+", " ", text)
-
-    # remove bullet markers like "*" at beginning of line
-    text = re.sub(r"^\s*\*\s*", " ", text)
-
-    # remove weird triple quotes and repeated quotes
-    text = text.replace('"""', ' ').replace("''", " ")
-
-    # remove stray slashes used by wiki formatting
-    text = re.sub(r"\s*/\s*", " ", text)
-
-    # normalize punctuation spacing
-    text = re.sub(r"([.,!?;:]){2,}", r" \1 ", text)
-
-    # normalize whitespace
-    text = re.sub(r"\s+", " ", text).strip()
-
-    return text
-
-
-df['comment_text']= df['comment_text'].apply(clean_text)
-
-df.head()
 
 def remove_files(data_file_path):
     if os.path.exists(data_file_path):
