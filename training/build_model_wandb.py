@@ -20,12 +20,6 @@ np.random.seed(42) # NEVER change this line
 
 tf.keras.mixed_precision.set_global_policy('mixed_float16')
 
-# create function to clearn the input text
-# def clean_text(text):
-#     text = text.lower()
-#     text = re.sub(r'\s+', ' ', text).strip()
-#     return text
-
 def clean_text(text):
     if not isinstance(text, str):
         return ""
