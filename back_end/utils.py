@@ -9,11 +9,12 @@ import tensorflow as tf
 import wandb
 import pickle
 import re
+import os
 
 def load_production_model_and_tokenizer(entity, project, model_name="toxic-comment-multilabel"):
     
     # Login to W&B (will use WANDB_API_KEY env variable)
-    wandb.login()
+    wandb.login(key=os.environ["WANDB_API_KEY"])
     
     api = wandb.Api()
 
@@ -55,8 +56,22 @@ def load_labels_from_dataset(entity, project, data_set_name = "toxic-data"):
     return labels
 
 def clean_text(text):
+    if not isinstance(text, str):
+        return ""
+    # lower-case
     text = text.lower()
-    text = re.sub(r'\s+', ' ', text).strip()
+    # remove wiki headings like "== something =="
+    text = re.sub(r"==+[^=]+==+", " ", text)
+    # remove bullet markers like "*" at beginning of line
+    text = re.sub(r"^\s*\*\s*", " ", text)
+    # remove weird triple quotes and repeated quotes
+    text = text.replace('"""', ' ').replace("''", " ")
+    # remove stray slashes used by wiki formatting
+    text = re.sub(r"\s*/\s*", " ", text)
+    # normalize punctuation spacing
+    text = re.sub(r"([.,!?;:]){2,}", r" \1 ", text)
+    # normalize whitespace
+    text = re.sub(r"\s+", " ", text).strip()
     return text
 
 def preprocess_user_input(user_input, tokenizer, maxlen):

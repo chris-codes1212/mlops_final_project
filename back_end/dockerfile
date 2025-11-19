@@ -6,10 +6,16 @@ ENV PYTHONUNBUFFERED 1
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+# Install Uvicorn
+RUN pip install uvicorn
 
 COPY main.py .
+
+
 
 # expose internal port for uvicorn
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# start Fast api backend
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+

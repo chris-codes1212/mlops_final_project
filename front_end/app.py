@@ -8,14 +8,26 @@ import json
 import wandb
 import pickle
 import re
+import os
+import time
+
+BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:8000")
+
+for i in range(10):
+    try:
+        r = requests.get(f"{BACKEND_URL}/health")
+        r.raise_for_status()
+        print("Backend ready!")
+        break
+    except:
+        print("Backend not ready, retrying...")
+        time.sleep(2)
+
 
 # create title and subtitle
 st.title("Comment Toxicity Classifier")
 st.subheader("An app to grade the toxicity of online comments")
 st.text("Enter a comment in the text box below. Press 'Submit' after typing a comment. You will see what classes of toxicity your comment falls into")
-
-# set url for the backend api (FastAPI) to make requests to
-back_end_url = "http://44.202.157.103:8000/predict"
 
 # get example comment from the user
 user_input = st.text_input("Insert comment")
@@ -26,7 +38,8 @@ if st.button("Submit"):
     payload = {"comment": user_input}
     # try to call the /predict Fastapi endpoint with the new comment
     try:
-        response = requests.post(back_end_url, json=payload, timeout=5)
+        response = requests.post(f"{BACKEND_URL}/predict", json=payload, timeout=10)
+        # response = requests.post(BACKEND_URL, json=payload, timeout=5)
         response.raise_for_status()  # raise exception for HTTP errors
         json_response = response.json()
         labels_list = json_response['labels']
