@@ -1,0 +1,55 @@
+# dl_c5_template.yml
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Comment Toxcicity Model Monitoring Instance
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    Description: The EC2 instance type.
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: The name of the EC2 Key Pair to use for SSH access.
+  AmiId:
+    Type: String
+    Default: ami-0ecb62995f68bb549
+    Description: Ubuntu Server 24.04 LTS (HVM),EBS General Purpose (SSD) Volume Type
+  StreamlitPort:
+    Type: Number
+    Default: 8501
+    Description: The port to open for streamlit
+
+Resources:
+  StreamlitSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for Deep Learning instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: !Ref StreamlitPort
+          ToPort: !Ref StreamlitPort
+          CidrIp: 0.0.0.0/0
+  
+  MonitorInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiId
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref StreamlitSG
+      Tags:
+        - Key: Name
+          Value: !Sub 'ModelMonitor-${InstanceType}'
+
+Outputs:
+  InstanceId:
+    Description: The ID of the new EC2 instance.
+    Value: !Ref MonitorInstance
+  InstancePublicIp:
+    Description: The public IP address of the new EC2 instance.
+    Value: !GetAtt MonitorInstance.PublicIp

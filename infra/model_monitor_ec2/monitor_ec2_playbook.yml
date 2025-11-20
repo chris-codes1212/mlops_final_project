@@ -1,0 +1,104 @@
+# dl_playbook.yml
+- name: Launch and configure a deep learning gpu instance
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    stack_name: "model_monitor_ec2"
+    template_file: "monitor_ec2_template.yaml"
+    instance_type: "t3.micro" # GPU instance
+    ami_id: "ami-0ecb62995f68bb549" # Ubuntu Server 24.04 LTS (HVM),EBS General Purpose (SSD) Volume Type
+    key_pair_name: "dl_c5_ssh" # Replace with your EC2 Key Pair name
+
+  tasks:
+    - name: Launch CloudFormation stack
+      amazon.aws.cloudformation:
+        stack_name: "{{ stack_name }}"
+        state: present
+        region: "us-east-1" # Specify your AWS region
+        template: "{{ template_file }}"
+        template_parameters:
+          InstanceType: "{{ instance_type }}"
+          KeyPairName: "{{ key_pair_name }}"
+          AmiId: "{{ ami_id }}"
+      register: stack_output
+
+    - name: Get instance public IP from stack output
+      set_fact:
+        instance_public_ip: "{{ stack_output.stack_outputs.InstancePublicIp }}"
+
+    - name: Add new instance to inventory
+      add_host:
+        name: "{{ instance_public_ip }}"
+        groups: toxic_comment_instances
+        ansible_user: "ubuntu" # Default user for Amazon Linux AMIs
+        ansible_ssh_private_key_file: "{{ key_pair_name }}.pem"
+
+    - name: Pause for 30 seconds
+      ansible.builtin.pause:
+        seconds: 30
+
+- name: Configure the instance
+  hosts: toxic_comment_instances
+  become: yes
+  gather_facts: yes
+  vars:
+    jupyter_password: ""
+
+  tasks:
+    - name: Install pip
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+    
+    - name: copy requirements.txt to instance
+      copy:
+        src: requirements.txt
+        dest: /home/ubuntu/requirements.txt
+
+    - name: Install python dependencies
+      pip:
+        requirements: /home/ubuntu/requirements.txt
+        executable: pip3
+
+    
+    - name: Install Required Packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+        update_cache: true
+  
+    - name: Add Docker’s official GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+         state: present
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Ensure Docker service is enabled and running
+      service:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Add current user to docker group (optional)
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+
