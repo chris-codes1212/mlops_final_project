@@ -36,10 +36,12 @@ label_counts = new_df[label_cols].sum().reset_index()
 label_counts.columns = ["label", "count"]
 
 # Plot
-plt.figure(figsize=(10, 6))
+fig, ax = plt.figure(figsize=(10, 6))
 sns.barplot(data=label_counts, x="label", y="count")
-plt.title("Frequency of Toxicity Labels")
+ax.title("Frequency of Toxicity Labels")
 plt.ylabel("Count")
 plt.xlabel("Label")
 plt.xticks(rotation=45)
 plt.show()
+
+st.pyplot(fig)
