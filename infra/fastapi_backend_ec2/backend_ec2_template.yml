@@ -16,7 +16,7 @@ Parameters:
   FastapiPort:
     Type: Number
     Default: 8000
-    Description: The port to open for streamlit
+    Description: The port to open for Fastapi
   InstanceProfile:
     Type: String
     Default: ec2_toxicity_app_Dynamo_DB_RW
@@ -49,7 +49,7 @@ Resources:
           Ebs:
             VolumeSize: 50  # GB
       SecurityGroupIds:
-        - !Ref StreamlitSG
+        - !Ref FastapiSG
       Tags:
         - Key: Name
           Value: !Sub 'Fastapi-Backend-${InstanceType}'
