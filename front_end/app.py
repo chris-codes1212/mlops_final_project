@@ -11,7 +11,7 @@ import re
 import os
 import time
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://98.92.133.104:8000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://3.215.45.153:8000")
 
 for i in range(10):
     try:
