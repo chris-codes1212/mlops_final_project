@@ -64,7 +64,7 @@ Resources:
     Type: AWS::EC2::EIPAssociation
     Properties:
       AllocationId: !GetAtt ElasticIP.AllocationId
-      InstanceId: !Ref EC2Instance
+      InstanceId: !Ref BackendInstance
 
 Outputs:
   InstanceId:
