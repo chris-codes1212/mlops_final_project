@@ -131,11 +131,11 @@
         groups: docker
         append: yes
     
-    - name: Install AWS CLI
-      apt:
+    - name: Install AWS CLI via pip
+      pip:
         name: awscli
-        state: present
-        update_cache: yes
+        state: latest
+        executable: /home/ubuntu/venv/bin/pip
 
     - name: Authenticate Docker to ECR
       command: >
