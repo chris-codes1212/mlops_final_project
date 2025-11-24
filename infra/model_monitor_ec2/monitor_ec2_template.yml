@@ -55,6 +55,7 @@ Resources:
         - Key: Name
           Value: !Sub 'Model-Monitor-${InstanceType}'
 
+
 Outputs:
   InstanceId:
     Description: The ID of the new EC2 instance.

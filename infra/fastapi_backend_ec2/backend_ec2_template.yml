@@ -54,6 +54,18 @@ Resources:
         - Key: Name
           Value: !Sub 'Fastapi-Backend-${InstanceType}'
 
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      PublicIp: 34.237.172.176
+
+  ElasticIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ElasticIP.AllocationId
+      InstanceId: !Ref EC2Instance
+
 Outputs:
   InstanceId:
     Description: The ID of the new EC2 instance.
