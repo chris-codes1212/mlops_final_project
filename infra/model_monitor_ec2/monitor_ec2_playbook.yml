@@ -138,13 +138,37 @@
     #     executable: /home/ubuntu/venv/bin/pip
 
 
-    - name: Install AWS CLI v2 system-wide
-      shell: |
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip -o awscliv2.zip
-        sudo ./aws/install
+    # - name: Install AWS CLI v2 system-wide
+    #   shell: |
+    #     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    #     unzip -o awscliv2.zip
+    #     sudo ./aws/install
+    #   args:
+    #     creates: /usr/local/bin/aws
+
+    - name: Install unzip
+      apt:
+        name: unzip
+        state: present
+        update_cache: yes
+
+    - name: Download AWS CLI v2
+      get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+        mode: '0644'
+
+    - name: Unzip AWS CLI
+      unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Install AWS CLI
+      command: sudo /tmp/aws/install
       args:
         creates: /usr/local/bin/aws
+
 
 
     - name: Authenticate Docker to ECR
