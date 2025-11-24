@@ -166,8 +166,8 @@
         --region us-east-1
         --query SecretString
         --output text
-      register: wandb_secret_cli
-      
+      register: wandb_secret
+
     - name: Create .env file for Docker
       copy:
         dest: /home/ubuntu/backend.env
