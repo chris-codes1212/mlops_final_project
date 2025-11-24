@@ -1,5 +1,4 @@
-# dl_playbook.yml
-- name: Launch and configure a deep learning gpu instance
+- name: Launch and configure model monitoring ec2 instance
   hosts: localhost
   connection: local
   gather_facts: false
@@ -27,23 +26,12 @@
       set_fact:
         instance_public_ip: "{{ stack_output.stack_outputs.InstancePublicIp }}"
 
-    # - name: Get instance ID from stack output
-    #   set_fact:
-    #     instance_id: "{{ stack_output.stack_outputs.InstanceId }}"
-
     - name: Add new instance to inventory
       add_host:
         name: "{{ instance_public_ip }}"
-        groups: toxic_comment_instances
+        groups: toxic_comment_instances_monitor
         ansible_user: "ubuntu" # Default user for Amazon Linux AMIs
         ansible_ssh_private_key_file: "{{ key_pair_name }}.pem"
-
-    # - name: Attach IAM role to EC2 instance
-    #   amazon.aws.ec2_instance:
-    #     instance_ids: "{{ instance_id }}"
-    #     state: present
-    #     region: "us-east-1"
-    #     iam_instance_profile: "ec2_toxicity_app_Dynamo_DB_RW"
 
 
     - name: Pause for 30 seconds
@@ -51,10 +39,9 @@
         seconds: 30
 
 - name: Configure the instance
-  hosts: toxic_comment_instances
+  hosts: toxic_comment_instances_monitor
   become: yes
   gather_facts: yes
-
 
   tasks:
 
@@ -120,7 +107,7 @@
         enabled: yes
         state: started
 
-    - name: Add current user to docker group (optional)
+    - name: Add current user to docker group
       user:
         name: ubuntu
         groups: docker
@@ -154,9 +141,9 @@
         aws ecr get-login-password --region us-east-1 |
         docker login --username AWS --password-stdin 703758696118.dkr.ecr.us-east-1.amazonaws.com
 
-    - name: Pull backend Docker image from ECR
+    - name: Pull monitor Docker image from ECR
       docker_image:
-        name: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend
+        name: 703758696118.dkr.ecr.us-east-1.amazonaws.com/monitor
         source: pull
 
     - name: Retrieve W&B API key from Secrets Manager via AWS CLI
@@ -170,7 +157,7 @@
 
     - name: Create .env file for Docker
       copy:
-        dest: /home/ubuntu/backend.env
+        dest: /home/ubuntu/monitor.env
         content: |
           WANDB_API_KEY={{ wandb_secret.stdout }}
         owner: ubuntu
@@ -179,19 +166,10 @@
 
     - name: Run Docker container with .env
       community.docker.docker_container:
-        name: backend
-        image: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend:latest
-        env_file: /home/ubuntu/backend.env
+        name: monitor
+        image: 703758696118.dkr.ecr.us-east-1.amazonaws.com/monitor:latest
+        env_file: /home/ubuntu/monitor.env
         ports:
-          - "8000:8000"
+          - "8501:8501"
         state: started
-
-    # - name: Run backend Docker container
-    #   docker_container:
-    #     name: backend
-    #     image: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend:latest
-    #     state: started
-    #     restart_policy: unless-stopped
-    #     ports:
-    #       - "8000:8000"
 

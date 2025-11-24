@@ -53,7 +53,7 @@ Resources:
         - !Ref StreamlitSG
       Tags:
         - Key: Name
-          Value: !Sub 'ModelMonitor-${InstanceType}'
+          Value: !Sub 'Model-Monitor-${InstanceType}'
 
 Outputs:
   InstanceId:

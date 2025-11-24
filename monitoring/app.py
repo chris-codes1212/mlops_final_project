@@ -64,7 +64,7 @@ st.markdown("""
 # ----------------------------------------------------------
 
 
-BACKEND_URL = "http://52.90.174.40:8000"
+BACKEND_URL = "http://98.92.133.104:8000"
 
 # try and load model data labels
 try:
