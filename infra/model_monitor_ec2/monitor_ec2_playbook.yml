@@ -27,12 +27,23 @@
       set_fact:
         instance_public_ip: "{{ stack_output.stack_outputs.InstancePublicIp }}"
 
+    - name: Get instance ID from stack output
+      set_fact:
+        instance_id: "{{ stack_output.stack_outputs.InstanceId }}"
+
     - name: Add new instance to inventory
       add_host:
         name: "{{ instance_public_ip }}"
         groups: toxic_comment_instances
         ansible_user: "ubuntu" # Default user for Amazon Linux AMIs
         ansible_ssh_private_key_file: "{{ key_pair_name }}.pem"
+
+    - name: Attach IAM role to EC2 instance
+      amazon.aws.ec2_instance:
+        instance_ids: "{{ instance_id }}"
+        region: us-east-1
+        instance_profile_name: ec2_toxicity_app_Dynamo_DB_RW
+        state: present
 
     - name: Pause for 30 seconds
       ansible.builtin.pause:
@@ -118,5 +129,30 @@
         name: ubuntu
         groups: docker
         append: yes
+    
+    - name: Install AWS CLI
+      apt:
+        name: awscli
+        state: present
+        update_cache: yes
+
+    - name: Authenticate Docker to ECR
+      command: >
+        aws ecr get-login-password --region us-east-1
+        | docker login --username AWS --password-stdin 703758696118.dkr.ecr.us-east-1.amazonaws.com
+
+    - name: Pull backend Docker image from ECR
+      docker_image:
+        name: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend
+        source: pull
+    
+    - name: Run backend Docker container
+      docker_container:
+        name: backend
+        image: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend:latest
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "8000:8000"
 
 
