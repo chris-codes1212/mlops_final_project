@@ -18,6 +18,10 @@ Parameters:
     Type: Number
     Default: 8501
     Description: The port to open for streamlit
+  InstanceProfile:
+    Type: String
+    Default: ec2_toxicity_app_Dynamo_DB_RW
+    Description: Role for EC2 instance
 
 Resources:
   StreamlitSG:
@@ -40,6 +44,11 @@ Resources:
       InstanceType: !Ref InstanceType
       ImageId: !Ref AmiId
       KeyName: !Ref KeyPairName
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 50  # GB
       SecurityGroupIds:
         - !Ref StreamlitSG
       Tags:
