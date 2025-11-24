@@ -5,6 +5,7 @@ import pandas as pd
 import json
 import os
 import sklearn
+import time
 
 import utils
 import write_logs
@@ -55,6 +56,7 @@ async def root():
 @app.post("/predict")
 async def make_prediction(input_data: predict_input):
 
+
     # if model did not load properly, give 503 error
     if model is None:
         raise HTTPException(
@@ -62,10 +64,11 @@ async def make_prediction(input_data: predict_input):
             detail = 'Model is not loaded. Cannot make predictions'
         )
 
-    # make prediction with the model
-    # processed_input = utils.preprocess_user_input(input_data.comment, tokenizer)
-    prediction = model.predict(utils.preprocess_user_input(input_data.comment, tokenizer, maxlen))
     
+    # make prediction with the model
+    start = time.time()
+    prediction = model.predict(utils.preprocess_user_input(input_data.comment, tokenizer, maxlen))
+    latency = time.time() - start
     # create list of prediction probabilities
     prediction_list = prediction.tolist()
 
@@ -83,7 +86,7 @@ async def make_prediction(input_data: predict_input):
 
 
     # write log to DynamoDB
-    write_logs.write_log(input_data, pred_labels, pred_proba_dict, labels)
+    write_logs.write_log(input_data, pred_labels, pred_proba_dict, latency, labels)
 
     # return the prediction from the model
     return {"labels": pred_labels}
