@@ -159,12 +159,15 @@
         name: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend
         source: pull
 
-    - name: Retrieve W&B API key from Secrets Manager
-      amazon.aws.aws_secret:
-        name: wandb_api_key
-        region: us-east-1
-      register: wandb_secret
-
+    - name: Retrieve W&B API key from Secrets Manager via AWS CLI
+      command: >
+        aws secretsmanager get-secret-value
+        --secret-id wandb_api_key
+        --region us-east-1
+        --query SecretString
+        --output text
+      register: wandb_secret_cli
+      
     - name: Create .env file for Docker
       copy:
         dest: /home/ubuntu/backend.env
