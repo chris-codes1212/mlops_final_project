@@ -5,7 +5,7 @@
   vars:
     stack_name: "streamlit-frontend-ec2"
     template_file: "frontend_ec2_template.yml"
-    instance_type: "t3.micro"
+    instance_type: "t3.medium"
     ami_id: "ami-0ecb62995f68bb549" # Ubuntu Server 24.04 LTS (HVM),EBS General Purpose (SSD) Volume Type
     key_pair_name: "dl_c5_ssh" # Replace with EC2 Key Pair name
 
