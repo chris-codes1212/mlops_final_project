@@ -7,7 +7,7 @@
     stack_name: "model-monitor-ec2"
     template_file: "monitor_ec2_template.yml"
     instance_type: "t3.micro" # GPU instance
-    ami_id: "ami-0a313d6098716f372" # Ubuntu Server 24.04 LTS (HVM),EBS General Purpose (SSD) Volume Type
+    ami_id: "ami-0ecb62995f68bb549" # Ubuntu Server 24.04 LTS (HVM),EBS General Purpose (SSD) Volume Type
     key_pair_name: "dl_c5_ssh" # Replace with your EC2 Key Pair name
 
   tasks:
@@ -43,6 +43,7 @@
   become: yes
   gather_facts: yes
 
+
   tasks:
     # - name: Install pip
     #   apt:
@@ -66,17 +67,7 @@
       command: python3 -m venv /home/ubuntu/venv
       args:
         creates: /home/ubuntu/venv/bin/activate
-
-    - name: Upgrade pip before installing dependencies
-      pip:
-        name: 
-          - pip
-          - setuptools
-          - wheel
-        state: latest
-        virtualenv: /home/ubuntu/venv
-        virtualenv_python: python3
-
+  
     - name: Install python dependencies in venv
       pip:
         requirements: /home/ubuntu/requirements.txt
