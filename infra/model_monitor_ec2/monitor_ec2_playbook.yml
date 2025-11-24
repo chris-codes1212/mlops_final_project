@@ -42,13 +42,18 @@
   hosts: toxic_comment_instances
   become: yes
   gather_facts: yes
-  vars:
-    jupyter_password: ""
 
   tasks:
-    - name: Install pip
+    # - name: Install pip
+    #   apt:
+    #     name: python3-pip
+    #     state: present
+    #     update_cache: yes
+
+    - name: Install python3-venv
+      become: yes
       apt:
-        name: python3-pip
+        name: python3-venv
         state: present
         update_cache: yes
     
