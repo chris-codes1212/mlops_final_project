@@ -10,8 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install uvicorn
 
 COPY main.py .
-
-
+COPY utils.py .
+COPY write_logs.py .
 
 # expose internal port for uvicorn
 EXPOSE 8000

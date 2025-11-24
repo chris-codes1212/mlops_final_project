@@ -149,26 +149,47 @@
       args:
         creates: /usr/local/bin/aws
 
-
-
     - name: Authenticate Docker to ECR
       shell: |
         aws ecr get-login-password --region us-east-1 |
         docker login --username AWS --password-stdin 703758696118.dkr.ecr.us-east-1.amazonaws.com
 
-
     - name: Pull backend Docker image from ECR
       docker_image:
         name: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend
         source: pull
-    
-    - name: Run backend Docker container
-      docker_container:
+
+    - name: Retrieve W&B API key
+      amazon.aws.aws_secret:
+        name: wandb_api_key
+        region: us-east-1
+      register: wandb_secret
+
+    - name: Create .env file for Docker
+      copy:
+        dest: /home/ubuntu/backend.env
+        content: |
+          WANDB_API_KEY={{ wandb_secret.value_json.WANDB_API_KEY }}
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Run Docker container with .env
+      community.docker.docker_container:
         name: backend
         image: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend:latest
-        state: started
-        restart_policy: unless-stopped
+        env_file: /home/ubuntu/backend.env
         ports:
           - "8000:8000"
+        state: started
+
+    # - name: Run backend Docker container
+    #   docker_container:
+    #     name: backend
+    #     image: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend:latest
+    #     state: started
+    #     restart_policy: unless-stopped
+    #     ports:
+    #       - "8000:8000"
 
 
