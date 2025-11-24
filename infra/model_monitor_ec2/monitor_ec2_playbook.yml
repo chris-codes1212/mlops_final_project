@@ -131,11 +131,21 @@
         groups: docker
         append: yes
     
-    - name: Install AWS CLI via pip
-      pip:
-        name: awscli
-        state: latest
-        executable: /home/ubuntu/venv/bin/pip
+    # - name: Install AWS CLI via pip
+    #   pip:
+    #     name: awscli
+    #     state: latest
+    #     executable: /home/ubuntu/venv/bin/pip
+
+
+    - name: Install AWS CLI v2 system-wide
+      shell: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip -o awscliv2.zip
+        sudo ./aws/install
+      args:
+        creates: /usr/local/bin/aws
+
 
     - name: Authenticate Docker to ECR
       command: >
