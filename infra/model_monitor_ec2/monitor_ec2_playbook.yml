@@ -59,7 +59,8 @@
 
     - name: Create virtual environment
       command: python3 -m venv /home/ubuntu/venv
-      creates: /home/ubuntu/venv/bin/activate
+      args:
+        creates: /home/ubuntu/venv/bin/activate
   
     - name: Install python dependencies in venv
       pip:
