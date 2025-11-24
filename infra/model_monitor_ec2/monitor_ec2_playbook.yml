@@ -159,7 +159,7 @@
         name: 703758696118.dkr.ecr.us-east-1.amazonaws.com/backend
         source: pull
 
-    - name: Retrieve W&B API key
+    - name: Retrieve W&B API key from Secrets Manager
       amazon.aws.aws_secret:
         name: wandb_api_key
         region: us-east-1
@@ -191,5 +191,4 @@
     #     restart_policy: unless-stopped
     #     ports:
     #       - "8000:8000"
-
 
