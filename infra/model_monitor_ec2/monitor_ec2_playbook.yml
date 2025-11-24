@@ -172,9 +172,10 @@
 
 
     - name: Authenticate Docker to ECR
-      command: >
-        aws ecr get-login-password --region us-east-1
-        | docker login --username AWS --password-stdin 703758696118.dkr.ecr.us-east-1.amazonaws.com
+      shell: |
+        aws ecr get-login-password --region us-east-1 |
+        docker login --username AWS --password-stdin 703758696118.dkr.ecr.us-east-1.amazonaws.com
+
 
     - name: Pull backend Docker image from ECR
       docker_image:
