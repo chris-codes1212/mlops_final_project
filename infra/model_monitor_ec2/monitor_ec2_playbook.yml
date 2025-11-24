@@ -41,9 +41,10 @@
     - name: Attach IAM role to EC2 instance
       amazon.aws.ec2_instance:
         instance_ids: "{{ instance_id }}"
-        region: us-east-1
-        instance_profile_name: ec2_toxicity_app_Dynamo_DB_RW
         state: present
+        region: "us-east-1"
+        iam_instance_profile: "ec2_toxicity_app_Dynamo_DB_RW"
+
 
     - name: Pause for 30 seconds
       ansible.builtin.pause:
