@@ -168,15 +168,11 @@
         --output text
       register: wandb_secret
 
-    - name: Parse W&B secret
-      set_fact:
-        wandb_api_key: "{{ wandb_secret.stdout | from_json | dict2items | selectattr('key','equalto','WANDB_API_KEY') | first.value }}"
-
     - name: Create .env file for Docker
       copy:
         dest: /home/ubuntu/backend.env
         content: |
-          WANDB_API_KEY={{ wandb_api_key }}
+          WANDB_API_KEY={{ wandb_secret.stdout }}
         owner: ubuntu
         group: ubuntu
         mode: '0600'
