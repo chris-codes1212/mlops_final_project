@@ -1,7 +1,6 @@
 from unittest.mock import patch, MagicMock
 import numpy as np
 
-
 # mock wandb
 
 # Fake artifact
@@ -27,7 +26,8 @@ patch("back_end.utils.tf.keras.models.load_model", return_value=fake_model).star
 
 # Only now import fastapi
 from fastapi.testclient import TestClient
-import back_end.main as main_module
+from back_end import main as main_module
+# import back_end.main as main_module
 
 client = TestClient(main_module.app)
 
