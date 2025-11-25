@@ -1,0 +1,32 @@
+# FastAPI + server
+fastapi
+uvicorn
+
+# ML / preprocessing
+pandas
+numpy
+scikit-learn
+tensorflow  # If you're using Keras LSTM
+wandb
+
+# AWS + DynamoDB
+boto3
+
+# Streamlit dashboard (imported by utils.py)
+streamlit
+
+# Plotting (Streamlit dashboard)
+matplotlib
+seaborn
+
+# Testing
+pytest
+
+# Optional: mock AWS services (makes tests safer)
+moto[boto3]
+
+# Linting (if you use flake8)
+flake8
+
+# Linting alternative (if using ruff instead of flake8)
+# ruff
