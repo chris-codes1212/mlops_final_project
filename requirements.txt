@@ -12,3 +12,5 @@ freezegun>=1.2
 
 # Linting
 flake8>=6.0
+
+streamlit
