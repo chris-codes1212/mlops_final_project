@@ -5,8 +5,6 @@ import pytest
 from unittest.mock import patch, MagicMock
 from monitoring import utils
 
-import utils
-
 
 
 # Test remove_files
