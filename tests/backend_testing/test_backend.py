@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Import the FastAPI app
 import back_end.main as main_module
@@ -31,7 +31,7 @@ def test_predict_success(mock_preprocess, mock_write_log):
     class DummyModel:
         def predict(self, X):
             # Return a 2D array like Keras predict()
-            return [[0.6, 0.4, 0.7]]  
+            return [[0.6, 0.4, 0.7]]
 
     # Patch model, tokenizer, maxlen, and labels
     main_module.model = DummyModel()
