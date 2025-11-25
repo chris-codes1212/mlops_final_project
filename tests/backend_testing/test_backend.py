@@ -1,26 +1,30 @@
 from unittest.mock import patch, MagicMock
 
-# PATCH WANDB BEFORE IMPORTING BACK_END
 
-# Fake WandB artifact object
+# mock wandb
+
+# Fake artifact
 fake_artifact = MagicMock()
-fake_artifact.download.return_value = None
+fake_artifact.download.return_value = "/tmp/fake_model_dir"
 
-# Fake WandB API object
+# Fake API
 fake_api = MagicMock()
 fake_api.artifact.return_value = fake_artifact
 
-# Mock wandb.login() to do nothing
 patch("back_end.utils.wandb.login", return_value=None).start()
-
-# Mock wandb.Api() to return our fake API object
 patch("back_end.utils.wandb.Api", return_value=fake_api).start()
-
-# Mock environment variable
 patch.dict("os.environ", {"WANDB_API_KEY": "dummy"}, clear=False).start()
 
-# ONLY NOW import FastAPI app
 
+# mock tensorflow loading
+# Fake model returned by load_model()
+fake_model = MagicMock()
+fake_model.predict.return_value = [[0.6, 0.4, 0.7]]
+
+patch("back_end.utils.tf.keras.models.load_model", return_value=fake_model).start()
+
+
+# Only now import fastapi
 from fastapi.testclient import TestClient
 import back_end.main as main_module
 
