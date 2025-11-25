@@ -54,11 +54,11 @@ Resources:
         - Key: Name
           Value: !Sub 'Fastapi-Backend-${InstanceType}'
 
-ElasticIPAssociation:
-  Type: AWS::EC2::EIPAssociation
-  Properties:
-    AllocationId: eipalloc-010647b3e32630d7a 
-    InstanceId: !Ref BackendInstance
+  ElasticIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: eipalloc-010647b3e32630d7a 
+      InstanceId: !Ref BackendInstance
 
 
 Outputs:
