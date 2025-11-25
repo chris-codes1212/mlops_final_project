@@ -81,9 +81,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          env:
-            IMAGE_TAG: ${{ github.sha }}   # full SHA, or substring below
-            REPO_URI: ${{ secrets.FRONT_END_ECR }}
+          env: |
+            IMAGE_TAG=${{ github.sha }}
+            REPO_URI=${{ secrets.FRONT_END_ECR }}
           script: |
             # If you want only first 7 chars of SHA
             IMAGE_TAG=${IMAGE_TAG::7}
