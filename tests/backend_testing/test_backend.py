@@ -1,11 +1,10 @@
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
-# Import the FastAPI app
-# import back_end.main as main_module
-from back_end import main as main_module
-# from back_end import utils
-
+# Patch wandb.login before importing your app
+with patch("back_end.utils.wandb.login"):
+    # Import the FastAPI app after patching wandb.login
+    import back_end.main as main_module
 
 client = TestClient(main_module.app)
 
