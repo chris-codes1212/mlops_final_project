@@ -1,9 +1,7 @@
-import streamlit as st
+import os
 import boto3
 import pandas as pd
-import os
 import wandb
-from boto3.dynamodb.conditions import Key, Attr
 
 
 def remove_files(file_path):
@@ -12,6 +10,7 @@ def remove_files(file_path):
         print(f"{file_path} deleted successfully")
     else:
         print(f"{file_path} does not exist")
+
 
 def load_train_data_and_labels(entity, project, data_set_name="toxic-data"):
     api = wandb.Api()
@@ -31,7 +30,8 @@ def load_train_data_and_labels(entity, project, data_set_name="toxic-data"):
 
     return df, labels, train_csv_path
 
-# load new data from DynamoDB
+
+# Load new data from DynamoDB
 def dynamodb_to_dataframe(table_name, labels, region="us-east-1"):
     dynamodb = boto3.client("dynamodb", region_name=region)
 
