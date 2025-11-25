@@ -13,7 +13,8 @@ try:
     ENTITY = 'chris-r-thompson1212-university-of-denver'
     PROJECT = "toxic-comment-multilabel"
     model, tokenizer, maxlen = utils.load_production_model_and_tokenizer(
-        ENTITY, PROJECT
+        ENTITY,
+        PROJECT,
     )
     print("Model Loaded Successfully")
 except FileNotFoundError:
@@ -26,21 +27,28 @@ except FileNotFoundError:
 try:
     ENTITY = 'chris-r-thompson1212-university-of-denver'
     PROJECT = "toxic-comment-multilabel"
-    labels = utils.load_labels_from_dataset(ENTITY, PROJECT)
+    labels = utils.load_labels_from_dataset(
+        ENTITY,
+        PROJECT,
+    )
     print("Data Labels Loaded Successfully")
 except FileNotFoundError:
     print("Error: could not load data labels.")
     labels = None
 
+
 # Create a class for the /predict endpoint
 class PredictInput(BaseModel):
     comment: str
+
 
 # Startup event to print if model is not loaded
 @app.on_event("startup")
 def startup_event():
     if model is None:
-        print("WARNING: Model is not loaded. Prediction endpoints will not work properly")
+        print(
+            "WARNING: Model is not loaded. Prediction endpoints will not work properly"
+        )
 
 
 # Health get endpoint
@@ -62,7 +70,11 @@ async def make_prediction(input_data: PredictInput):
     # Make prediction with the model
     start = time.time()
     prediction = model.predict(
-        utils.preprocess_user_input(input_data.comment, tokenizer, maxlen)
+        utils.preprocess_user_input(
+            input_data.comment,
+            tokenizer,
+            maxlen,
+        )
     )
     latency = time.time() - start
 
@@ -70,13 +82,23 @@ async def make_prediction(input_data: PredictInput):
     prediction_list = prediction.tolist()
 
     # Create dictionary of prediction probabilities
-    pred_proba_dict = {label: prediction_list[0][idx] for idx, label in enumerate(labels)}
+    pred_proba_dict = {
+        label: prediction_list[0][idx] for idx, label in enumerate(labels)
+    }
 
     # Get predicted labels (threshold > 0.5)
-    pred_labels = [label for label, prob in pred_proba_dict.items() if prob > 0.5]
+    pred_labels = [
+        label for label, prob in pred_proba_dict.items() if prob > 0.5
+    ]
 
     # Write log to DynamoDB
-    write_logs.write_log(input_data, pred_labels, pred_proba_dict, latency, labels)
+    write_logs.write_log(
+        input_data,
+        pred_labels,
+        pred_proba_dict,
+        latency,
+        labels,
+    )
 
     # Return the prediction from the model
     return {"labels": pred_labels}
