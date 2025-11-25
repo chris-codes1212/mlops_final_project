@@ -52,7 +52,7 @@ def dynamodb_to_dataframe(table_name, labels, region="us-east-1"):
     for item in items:
         row = {}
         row["timestamp"] = item["timestamp"]["S"]
-        row["latency_seconds"] = item["latency_seconds"].astype(float)
+        row["latency_seconds"] = float(item["latency_seconds"]["N"])
         row["comment"] = item["comment"]["S"]
 
         # Convert list of {"S": label} into a Python list of strings
