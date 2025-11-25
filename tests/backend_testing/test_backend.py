@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, MagicMock
 
 # The module to test is 'front_end.app'
