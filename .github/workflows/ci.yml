@@ -92,7 +92,3 @@ jobs:
             docker stop frontend || true
             docker rm frontend || true
             docker run -d --name frontend -p 8501:8501 --restart unless-stopped $REPO_URI:$IMAGE_TAG
-
-
-
-
