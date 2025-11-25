@@ -28,6 +28,9 @@ jobs:
     #   run: |
     #     flake8 .
 
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=${PYTHONPATH}:${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+
     - name: Run tests
       run: |
         pytest --maxfail=1 --disable-warnings -q
