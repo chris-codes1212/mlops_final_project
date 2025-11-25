@@ -74,3 +74,48 @@ def test_laod_train_data_and_labels(mock_read_csv, mock_wandb_api, tmp_path):
     mock_artifact.get_entry.assert_called_once_with("train.csv")
     mock_entry.download.assert_called_once()
     mock_read_csv.assert_called_once_with(str(fake_csv_path))
+
+
+@patch("monitoring.utils.boto3.client")
+def test_dynamodb_to_dataframe_multiple_pages(mock_boto_client):
+    # Mock the DynamoDB client
+    mock_dynamodb = MagicMock()
+    mock_boto_client.return_value = mock_dynamodb
+
+    # First page
+    mock_dynamodb.scan.side_effect = [
+        {
+            "Items": [
+                {
+                    "timestamp": {"S": "2025-01-01T00:00:00Z"},
+                    "latency_seconds": {"N": "0.123"},
+                    "comment": {"S": "Comment 1"},
+                    "prediction_labels": {"L": [{"S": "toxic"}]},
+                }
+            ],
+            "LastEvaluatedKey": "next_key",
+        },
+        {
+            "Items": [
+                {
+                    "timestamp": {"S": "2025-01-01T01:00:00Z"},
+                    "latency_seconds": {"N": "0.456"},
+                    "comment": {"S": "Comment 2"},
+                    "prediction_labels": {"L": [{"S": "obscene"}]},
+                }
+            ]
+        },
+    ]
+
+    table_name = "test_table"
+    labels = ["toxic", "obscene"]
+
+    df = utils.dynamodb_to_dataframe(table_name, labels)
+
+    # Assertions
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape[0] == 2
+    assert df.loc[0, "toxic"] == 1
+    assert df.loc[0, "obscene"] == 0
+    assert df.loc[1, "toxic"] == 0
+    assert df.loc[1, "obscene"] == 1
