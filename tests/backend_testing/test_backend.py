@@ -1,13 +1,13 @@
 from unittest.mock import patch
-from fastapi.testclient import TestClient
 
-# -----------------------------
-# Patch W&B before ANY imports
-# -----------------------------
+# --------------------------------------------------
+# Critical patches BEFORE importing the app
+# --------------------------------------------------
 patch("back_end.utils.wandb.login", return_value=None).start()
+patch("back_end.utils.wandb.Api", return_value=None).start()   # prevents API key check
 patch.dict("os.environ", {"WANDB_API_KEY": "dummy"}, clear=False).start()
 
-# Now safe to import FastAPI app
+from fastapi.testclient import TestClient
 import back_end.main as main_module
 
 client = TestClient(main_module.app)
