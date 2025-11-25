@@ -1,13 +1,12 @@
-import json
 import requests
 import pandas as pd
-from sklearn.metrics import accuracy_score
 import boto3
 import os
 
-def load_data(): 
+
+def load_data():
     # Initialize S3 client (EC2 role credentials will be used automatically)
-    s3 = boto3.client('s3')
+    s3 = boto3.client("s3")
 
     # S3 path
     bucket_name = "toxic-comment-classifier-training-data"
@@ -21,11 +20,13 @@ def load_data():
 
     return data_file_path
 
+
 data_file_path = load_data()
 
 df = pd.read_csv(data_file_path)
 
-df = df.sample(n=1000, random_state=40) 
+df = df.sample(n=1000, random_state=40)
+
 
 def remove_files(data_file_path):
     if os.path.exists(data_file_path):
@@ -34,9 +35,10 @@ def remove_files(data_file_path):
     else:
         print("Data file does not exist")
 
+
 payload_list = [{"comment": text} for text in df["comment_text"]]
 
-url = "http://3.215.45.153:8000/predict" 
+url = "http://3.215.45.153:8000/predict"
 
 print("Adding records to DynamoDB...")
 for payload in payload_list:
