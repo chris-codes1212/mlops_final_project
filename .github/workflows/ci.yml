@@ -81,9 +81,13 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          env:
+            IMAGE_TAG: ${{ github.sha }}   # full SHA, or substring below
+            REPO_URI: ${{ secrets.FRONT_END_ECR }}
           script: |
-            IMAGE_TAG=${GITHUB_SHA::7}
-            REPO_URI=${{ secrets.FRONT_END_ECR }}
+            # If you want only first 7 chars of SHA
+            IMAGE_TAG=${IMAGE_TAG::7}
+
             docker pull $REPO_URI:$IMAGE_TAG
             docker stop frontend || true
             docker rm frontend || true
