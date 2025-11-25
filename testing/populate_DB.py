@@ -36,7 +36,7 @@ def remove_files(data_file_path):
 
 payload_list = [{"comment": text} for text in df["comment_text"]]
 
-url = "http://localhost:8000/predict" 
+url = "http://3.215.45.153:8000/predict" 
 
 print("Adding records to DynamoDB...")
 for payload in payload_list:

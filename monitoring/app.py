@@ -108,59 +108,82 @@ axes[1].tick_params(axis='x', labelrotation=60)
 
 st.pyplot(fig)
 
-st.subheader("An app to grade the toxicity of online comments")
-st.text("Enter a comment in the text box below. Press 'Submit' after typing a comment.")
+# st.subheader("An app to grade the toxicity of online comments")
+# st.text("Enter a comment in the text box below. Press 'Submit' after typing a comment.")
 
-user_input = st.text_input("Insert comment")
+# user_input = st.text_input("Insert comment")
 
-# --- STORE RATING STATE ---
-if "user_rating" not in st.session_state:
-    st.session_state.user_rating = None
+# # --- STORE RATING STATE ---
+# if "user_rating" not in st.session_state:
+#     st.session_state.user_rating = None
 
 
-# submit button
-if st.button("Submit"):
+# # submit button
+# if st.button("Submit"):
 
-    payload = {"comment": user_input}
+#     payload = {"comment": user_input}
 
-    try:
-        response = requests.post(f"{BACKEND_URL}/predict", json=payload, timeout=10)
-        response.raise_for_status()
-        json_response = response.json()
-        labels_list = json_response['labels']
+#     try:
+#         response = requests.post(f"{BACKEND_URL}/predict", json=payload, timeout=10)
+#         response.raise_for_status()
+#         json_response = response.json()
+#         labels_list = json_response['labels']
 
-        if len(labels_list) == 0:
-            st.subheader("This comment is :green[non-toxic]")
-        else:
-            labels_str = ", ".join(label.capitalize() for label in labels_list)
-            st.subheader(f"This comment is classified as :red[{labels_str}]")
+#         if len(labels_list) == 0:
+#             st.subheader("This comment is :green[non-toxic]")
+#         else:
+#             labels_str = ", ".join(label.capitalize() for label in labels_list)
+#             st.subheader(f"This comment is classified as :red[{labels_str}]")
 
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error connecting to backend: {e}")
+#     except requests.exceptions.RequestException as e:
+#         st.error(f"Error connecting to backend: {e}")
 
-    # rating buttons
-    st.markdown("<div class='rating-container'>", unsafe_allow_html=True)
+#     # rating buttons
+#     st.markdown("<div class='rating-container'>", unsafe_allow_html=True)
 
-    st.markdown("<div class='rating-question'>Do you agree with the category?</div>",
-                unsafe_allow_html=True)
+#     st.markdown("<div class='rating-question'>Do you agree with the category?</div>",
+#                 unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1, 1])
+#     col1, col2 = st.columns([1, 1])
 
-    with col1:
-        if st.button("👍 Thumbs Up", key="thumb_up"):
-            ###############################################################
-            #                       CALLBACK FOR 👍 BUTTON               #
-            #               (Place your code here later)                 #
-            ###############################################################
-            st.session_state.user_rating = "up"
+#     with col1:
+#         if st.button("👍 Thumbs Up", key="thumb_up"):
+#             ###############################################################
+#             #                       CALLBACK FOR 👍 BUTTON               #
+#             #               (Place your code here later)                 #
+#             ###############################################################
+#             st.session_state.user_rating = "up"
 
-    with col2:
-        if st.button("👎 Thumbs Down", key="thumb_down"):
-            ###############################################################
-            #                       CALLBACK FOR 👎 BUTTON               #
-            #               (Place your code here later)                 #
-            ###############################################################
-            st.session_state.user_rating = "down"
+#     with col2:
+#         if st.button("👎 Thumbs Down", key="thumb_down"):
+#             ###############################################################
+#             #                       CALLBACK FOR 👎 BUTTON               #
+#             #               (Place your code here later)                 #
+#             ###############################################################
+#             st.session_state.user_rating = "down"
 
-    st.markdown("</div>", unsafe_allow_html=True)
+#     st.markdown("</div>", unsafe_allow_html=True)
     # ---------------------------------------------------------------
+
+if new_df is not None and "latency_seconds" in new_df.columns:
+
+    st.subheader("Prediction Latency Over Time")
+
+    fig_lat, ax_lat = plt.subplots(figsize=(12, 4))
+
+    sns.lineplot(
+        data=new_df.sort_values("timestamp"),
+        x="timestamp",
+        y="latency_seconds",
+        ax=ax_lat
+    )
+
+    ax_lat.set_title("Model Inference Latency Over Time")
+    ax_lat.set_xlabel("Timestamp")
+    ax_lat.set_ylabel("Latency (seconds)")
+    ax_lat.tick_params(axis='x', labelrotation=45)
+
+    st.pyplot(fig_lat)
+
+else:
+    st.warning("Latency data not available yet.")
