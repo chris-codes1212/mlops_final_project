@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import time
 
 from . import utils
-import write_logs
+from . import write_logs
 
 # Create FastAPI app
 app = FastAPI(title="Toxic Comment Moderation")
