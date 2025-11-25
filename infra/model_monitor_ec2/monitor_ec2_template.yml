@@ -55,6 +55,11 @@ Resources:
         - Key: Name
           Value: !Sub 'Model-Monitor-${InstanceType}'
 
+  ElasticIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: eipalloc-046ba55743f600a42
+      InstanceId: !Ref MonitorInstance
 
 Outputs:
   InstanceId:
