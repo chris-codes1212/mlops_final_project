@@ -1,11 +1,7 @@
 import os
 import re
 import pickle
-import datetime
 
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import tensorflow as tf
 import wandb
 
@@ -104,5 +100,7 @@ def preprocess_user_input(user_input, tokenizer, maxlen):
 
     user_input_cleaned = clean_text(user_input)
     seq = tokenizer.texts_to_sequences([user_input_cleaned])
-    padded_seq = tf.keras.preprocessing.sequence.pad_sequences(seq, maxlen=maxlen)
+    padded_seq = tf.keras.preprocessing.sequence.pad_sequences(
+        seq, maxlen=maxlen
+    )
     return padded_seq
