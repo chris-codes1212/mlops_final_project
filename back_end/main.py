@@ -1,10 +1,5 @@
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
-from datetime import datetime
-import pandas as pd
-import json
-import os
-import sklearn
 import time
 
 import utils
