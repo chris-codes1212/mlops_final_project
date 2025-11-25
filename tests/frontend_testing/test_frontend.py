@@ -1,10 +1,10 @@
 from unittest.mock import patch, MagicMock
 import importlib
 
-@patch("front_end.app.requests.get")
-@patch("front_end.app.requests.post")
-@patch("front_end.app.st")
-def test_submit_comment_non_toxic(mock_st, mock_post, mock_get):
+@patch("front_end.app.st")              
+@patch("front_end.app.requests.post")    
+@patch("front_end.app.requests.get")     
+def test_submit_comment_non_toxic(mock_get, mock_post, mock_st):
     # Mock health check to succeed
     mock_health = MagicMock()
     mock_health.raise_for_status.return_value = None
