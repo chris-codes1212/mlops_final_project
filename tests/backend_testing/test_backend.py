@@ -1,11 +1,25 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
-# --------------------------------------------------
-# Critical patches BEFORE importing the app
-# --------------------------------------------------
+# PATCH WANDB BEFORE IMPORTING BACK_END
+
+# Fake WandB artifact object
+fake_artifact = MagicMock()
+fake_artifact.download.return_value = None
+
+# Fake WandB API object
+fake_api = MagicMock()
+fake_api.artifact.return_value = fake_artifact
+
+# Mock wandb.login() to do nothing
 patch("back_end.utils.wandb.login", return_value=None).start()
-patch("back_end.utils.wandb.Api", return_value=None).start()   # prevents API key check
+
+# Mock wandb.Api() to return our fake API object
+patch("back_end.utils.wandb.Api", return_value=fake_api).start()
+
+# Mock environment variable
 patch.dict("os.environ", {"WANDB_API_KEY": "dummy"}, clear=False).start()
+
+# ONLY NOW import FastAPI app
 
 from fastapi.testclient import TestClient
 import back_end.main as main_module
