@@ -60,7 +60,15 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # Example for frontend
+      # build backend image
+      - name: Build and Push backend service
+        run: |
+          IMAGE_TAG=latest
+          REPO_URI=${{ secrets.BACK_END_ECR }}
+          docker build -t $REPO_URI:$IMAGE_TAG ./back_end
+          docker push $REPO_URI:$IMAGE_TAG
+
+      # build frontend image
       - name: Build and Push frontend service
         run: |
           IMAGE_TAG=latest
@@ -75,10 +83,26 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+      - name: SSH and deploy back end service
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.BACK_END_EC2 }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: IMAGE_TAG,REPO_URI
+          script: |
+            docker pull $REPO_URI:$IMAGE_TAG
+            docker stop backend || true
+            docker rm backend|| true
+            docker run -d --name backend -p 8000:8000 --restart unless-stopped $REPO_URI:$IMAGE_TAG
+        env:
+          IMAGE_TAG: latest
+          REPO_URI: ${{ secrets.BACK_END_ECR }}
+      
       - name: SSH and deploy front end service
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.FRONT_END_EC2 }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: IMAGE_TAG,REPO_URI
