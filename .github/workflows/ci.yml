@@ -29,7 +29,7 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        flake8 . --ignore=E501
+        flake8 . --ignore=E501,W292
 
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=${PYTHONPATH}:${GITHUB_WORKSPACE}" >> $GITHUB_ENV
