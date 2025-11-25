@@ -1,16 +1,32 @@
-# Core dependencies used by utils.py
-pandas>=1.5
-boto3>=1.26
-wandb>=0.15
+# FastAPI + server
+fastapi
+uvicorn
 
-# Testing tools
-pytest>=7.0
-pytest-mock>=3.10
+# ML / preprocessing
+pandas
+numpy
+scikit-learn
+tensorflow  # If you're using Keras LSTM
+wandb
 
-# for mocking datetime, etc.
-freezegun>=1.2
+# AWS + DynamoDB
+boto3
 
-# Linting
-flake8>=6.0
-
+# Streamlit dashboard (imported by utils.py)
 streamlit
+
+# Plotting (Streamlit dashboard)
+matplotlib
+seaborn
+
+# Testing
+pytest
+
+# Optional: mock AWS services (makes tests safer)
+moto[boto3]
+
+# Linting (if you use flake8)
+flake8
+
+# Linting alternative (if using ruff instead of flake8)
+# ruff
