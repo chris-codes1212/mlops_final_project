@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock
+import numpy as np
 
 
 # mock wandb
@@ -51,7 +52,7 @@ def test_predict_success(mock_preprocess, mock_write_log):
     # Dummy model
     class DummyModel:
         def predict(self, X):
-            return [[0.6, 0.4, 0.9]]
+            return np.array([[0.6, 0.4, 0.9]])
 
     main_module.model = DummyModel()
     main_module.tokenizer = "dummy"
