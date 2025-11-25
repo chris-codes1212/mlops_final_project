@@ -2,8 +2,8 @@ from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 import time
 
-from . import utils
-from . import write_logs
+import utils
+import write_logs
 
 # Create FastAPI app
 app = FastAPI(title="Toxic Comment Moderation")
