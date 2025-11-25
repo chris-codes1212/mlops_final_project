@@ -4,7 +4,7 @@ from unittest.mock import patch
 # Import the FastAPI app
 # import back_end.main as main_module
 from back_end import main as main_module
-from back_end import utils
+# from back_end import utils
 
 
 client = TestClient(main_module.app)
