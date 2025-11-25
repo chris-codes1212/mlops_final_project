@@ -30,3 +30,5 @@ flake8
 
 # Linting alternative (if using ruff instead of flake8)
 # ruff
+
+httpx
