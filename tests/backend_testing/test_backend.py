@@ -2,7 +2,10 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch
 
 # Import the FastAPI app
-import back_end.main as main_module
+# import back_end.main as main_module
+from back_end import main as main_module
+from back_end import utils
+
 
 client = TestClient(main_module.app)
 
