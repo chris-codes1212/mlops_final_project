@@ -1,21 +1,19 @@
 FROM python:3.10-slim
 
 WORKDIR /app
+
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-# Install Uvicorn
 RUN pip install uvicorn
 
-COPY main.py .
-COPY utils.py .
-COPY write_logs.py .
+# Copy all backend source files
+COPY . ./back_end/
 
-# expose internal port for uvicorn
 EXPOSE 8000
 
-# start Fast api backend
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "back_end.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
 
