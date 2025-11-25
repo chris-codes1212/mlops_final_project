@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from monitoring import utils
 
-
+# test remove_files function
 def test_remove_files(tmp_path):
     # Create a temp file
     f = tmp_path / "temp.csv"
