@@ -81,11 +81,20 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          env: |
-            IMAGE_TAG=latest
-            REPO_URI=${{ secrets.FRONT_END_ECR }}
+          env:
+            IMAGE_TAG: latest
+            REPO_URI: ${{ secrets.FRONT_END_ECR }}
           script: |
+            echo "Pulling image: $REPO_URI:$IMAGE_TAG"
+
             docker pull $REPO_URI:$IMAGE_TAG
+
             docker stop frontend || true
             docker rm frontend || true
-            docker run -d --name frontend -p 8501:8501 --restart unless-stopped $REPO_URI:$IMAGE_TAG
+
+            docker run -d \
+              --name frontend \
+              -p 8501:8501 \
+              --restart unless-stopped \
+              $REPO_URI:$IMAGE_TAG
+
