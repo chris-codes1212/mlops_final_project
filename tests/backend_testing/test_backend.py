@@ -1,87 +1,53 @@
+from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 
-# The module to test is 'front_end.app'
-import front_end.app as app_module
+# Import the FastAPI app
+import back_end.main as main_module
+
+client = TestClient(main_module.app)
 
 
-@patch("front_end.app.st")
-@patch("front_end.app.requests.post")
-@patch("front_end.app.requests.get")
-def test_backend_health_ready(mock_get, mock_post, mock_st):
-    # Mock /health GET request
-    mock_response = MagicMock()
-    mock_response.raise_for_status.return_value = None
-    mock_get.return_value = mock_response
-
-    # The health check loop runs at import, so we just assert GET was called
-    app_module.BACKEND_URL = "http://fake-backend"
-    import importlib
-    importlib.reload(app_module)  # reload to trigger health check
-
-    mock_get.assert_called()
-    # Print outputs are captured by default in pytest, we could assert print call if needed
+# Test /health endpoint
+def test_health_endpoint():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
 
 
-@patch("front_end.app.st")
-@patch("front_end.app.requests.post")
-def test_submit_comment_non_toxic(mock_post, mock_st):
-    # Mock Streamlit button press
-    mock_st.button.return_value = True
-    mock_st.text_input.return_value = "This is a comment"
-
-    # Mock /predict POST response with empty labels
-    mock_response = MagicMock()
-    mock_response.raise_for_status.return_value = None
-    mock_response.json.return_value = {"labels": []}
-    mock_post.return_value = mock_response
-
-    # Run the part of the script that handles submission
-    import importlib
-    import front_end.app as app_module
-    importlib.reload(app_module)
-
-    # Check that st.subheader was called with non-toxic message
-    mock_st.subheader.assert_any_call("This comment is :green[non-toxic]")
+# Test /predict when model is None
+@patch("back_end.main.model", None)
+def test_predict_model_not_loaded():
+    payload = {"comment": "This is a test comment"}
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Model is not loaded. Cannot make predictions"
 
 
-@patch("front_end.app.st")
-@patch("front_end.app.requests.post")
-def test_submit_comment_toxic(mock_post, mock_st):
-    # Mock Streamlit button press
-    mock_st.button.return_value = True
-    mock_st.text_input.return_value = "This is a toxic comment"
+# Test /predict with mocked model and utils
+@patch("back_end.main.write_logs.write_log")
+@patch("back_end.main.utils.preprocess_user_input")
+def test_predict_success(mock_preprocess, mock_write_log):
+    # Mock the model object
+    class DummyModel:
+        def predict(self, X):
+            # Return a 2D array like Keras predict()
+            return [[0.6, 0.4, 0.7]]  
 
-    # Mock /predict POST response with some labels
-    mock_response = MagicMock()
-    mock_response.raise_for_status.return_value = None
-    mock_response.json.return_value = {"labels": ["toxic", "threat"]}
-    mock_post.return_value = mock_response
+    # Patch model, tokenizer, maxlen, and labels
+    main_module.model = DummyModel()
+    main_module.tokenizer = "dummy_tokenizer"
+    main_module.maxlen = 100
+    main_module.labels = ["toxic", "threat", "insult"]
 
-    # Reload app to trigger code execution
-    import importlib
-    import front_end.app as app_module
-    importlib.reload(app_module)
+    # Mock preprocessing to return any value (we don't use it)
+    mock_preprocess.return_value = "processed_input"
 
-    # Check that st.subheader was called with the correct classification
-    mock_st.subheader.assert_any_call(
-        "This comment is classified as :red[Toxic, Threat]"
-    )
+    payload = {"comment": "This is a test comment"}
+    response = client.post("/predict", json=payload)
 
+    assert response.status_code == 200
+    # Labels with prob > 0.5 are "toxic" and "insult"
+    assert response.json() == {"labels": ["toxic", "insult"]}
 
-@patch("front_end.app.st")
-@patch("front_end.app.requests.post")
-def test_submit_comment_backend_error(mock_post, mock_st):
-    # Mock Streamlit button press
-    mock_st.button.return_value = True
-    mock_st.text_input.return_value = "Error comment"
-
-    # Mock POST request raising RequestException
-    from requests.exceptions import RequestException
-    mock_post.side_effect = RequestException("Connection error")
-
-    import importlib
-    import front_end.app as app_module
-    importlib.reload(app_module)
-
-    # Check that st.error was called
-    mock_st.error.assert_any_call("Error connecting to backend: Connection error")
+    # Ensure write_log was called
+    assert mock_write_log.called
