@@ -146,6 +146,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: IMAGE_TAG,REPO_URI,WANDB_API_KEY
           script: |
+            # Login to ECR
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REPO_URI
             docker pull $REPO_URI:$IMAGE_TAG
             docker stop monitor || true
             docker rm monitor || true
