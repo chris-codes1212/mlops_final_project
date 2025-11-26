@@ -81,7 +81,7 @@ jobs:
         run: |
           IMAGE_TAG=latest
           REPO_URI=${{ secrets.MONITOR_ECR }}
-          docker build -t $REPO_URI:$IMAGE_TAG ./monitor
+          docker build -t $REPO_URI:$IMAGE_TAG ./monitoring
           docker push $REPO_URI:$IMAGE_TAG
 
   deploy:
