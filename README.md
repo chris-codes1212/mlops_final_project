@@ -1,6 +1,6 @@
 # MLOps Final Project: Toxic Comment Classification
 
-This repository contains a full-stack MLOps project for multi-label toxicity classification of online comments using a deep learning LSTM model. The project includes **training**, a **FastAPI backend**, a **Streamlit frontend**, a **monitoring dashboard**, and infrastructure automation with **CloudFormation** and **Ansible**.
+This repository contains a full-stack MLOps project for multi-label toxicity classification of online comments using a deep learning LSTM model. The project includes **training**, a **FastAPI backend**, a **Streamlit frontend**, a **monitoring dashboard**, and infrastructure automation with **CloudFormation**, **Ansible**, and **CI/CD via GitHub Actions**.
 
 ---
 
@@ -12,6 +12,7 @@ This repository contains a full-stack MLOps project for multi-label toxicity cla
 - [Streamlit Frontend](#streamlit-frontend)  
 - [Monitor Dashboard](#monitor-dashboard)  
 - [Docker and Deployment](#docker-and-deployment)  
+- [CI/CD Workflow](#cicd-workflow)  
 - [Infrastructure](#infrastructure)  
 - [Testing](#testing)  
 - [Populate DynamoDB](#populate-dynamodb)  
@@ -100,6 +101,40 @@ This repository contains a full-stack MLOps project for multi-label toxicity cla
 
 ---
 
+## CI/CD Workflow
+
+The project now includes a **GitHub Actions workflow** that automates testing, building, and deploying:
+
+1. **Trigger:** Workflow runs on **pull requests or merges to the `main` branch**.
+2. **Test:** Linting (`flake8`) and unit tests (`pytest`) are executed. Failure blocks deployment.
+3. **Docker Build & Push:** Images for the FastAPI backend, Streamlit frontend, and monitoring dashboard are built and pushed to **AWS ECR**.
+4. **Deployment:** EC2 instances pull the new images and run the containers.
+
+### Simple CI/CD Flow
+
+```
+GitHub PR / Merge to main
+          │
+          ▼
+   GitHub Actions Workflow
+          │
+   ┌──────┴──────┐
+   │   Tests     │
+   │ (pytest)    │
+   └──────┬──────┘
+          ▼
+   Docker Build & Push
+     (Backend/Frontend/Monitor)
+          ▼
+  EC2 Instances pull & deploy
+```
+
+**How to trigger a deployment:**  
+- Simply create a **pull request to `main`**.  
+- Once tests pass, the workflow automatically builds new images and deploys them.
+
+---
+
 ## Infrastructure
 
 - `infra/` contains CloudFormation templates and Ansible playbooks for EC2 provisioning:  
@@ -138,4 +173,6 @@ This repository contains a full-stack MLOps project for multi-label toxicity cla
 ## Notes
 
 - Make sure your **AWS credentials / IAM roles** have access to ECR, S3, and DynamoDB.  
-- Backend relies on the production-tagged model in **Weights & Biases** for predictions.
+- Backend relies on the production-tagged model in **Weights & Biases** for predictions.  
+- Creating a pull request to `main` will automatically trigger the **CI/CD workflow** to build, push, and deploy new containers.
+
