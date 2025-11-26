@@ -89,15 +89,31 @@ jobs:
           host: ${{ secrets.BACK_END_EC2 }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: IMAGE_TAG,REPO_URI
+
+          # IMPORTANT: list all env vars you want injected into the SSH session
+          envs: IMAGE_TAG,REPO_URI,WANDB_API_KEY
+
           script: |
+            echo "Logging into backend EC2..."
+            echo "Pulling image: $REPO_URI:$IMAGE_TAG"
+
             docker pull $REPO_URI:$IMAGE_TAG
             docker stop backend || true
-            docker rm backend|| true
-            docker run -d --name backend -p 8000:8000 --restart unless-stopped $REPO_URI:$IMAGE_TAG
+            docker rm backend || true
+
+            # export WANDB key into container at runtime
+            docker run -d \
+              --name backend \
+              -p 8000:8000 \
+              --restart unless-stopped \
+              -e WANDB_API_KEY=$WANDB_API_KEY \
+              $REPO_URI:$IMAGE_TAG
+
         env:
           IMAGE_TAG: latest
           REPO_URI: ${{ secrets.BACK_END_ECR }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+
       
       - name: SSH and deploy front end service
         uses: appleboy/ssh-action@v0.1.7
