@@ -159,5 +159,5 @@ jobs:
               $REPO_URI:$IMAGE_TAG
         env:
           IMAGE_TAG: latest
-          REPO_URI: ${{ secrets.FRONT_END_ECR }}
+          REPO_URI: ${{ secrets.MONITOR_ECR }}
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
