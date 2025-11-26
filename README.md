@@ -51,13 +51,16 @@ This repository contains a full-stack MLOps project for multi-label toxicity cla
 ## Training the Model
 
 - `build_model.py` downloads the training data from **S3** (`train.csv`) as a pandas DataFrame.  
+  - The dataset is originally sourced from [Kaggle Jigsaw Toxic Comment Classification Challenge](https://www.kaggle.com/competitions/jigsaw-toxic-comment-classification-challenge/data).  
 - Data is cleaned of unnecessary symbols and tokenized.  
 - The dataset is split into training, validation, and test sets.  
 - Class weights are computed to handle imbalanced classes.  
 - An LSTM model is trained with callbacks for validation loss.  
+- The model predicts the **toxicity class of a comment**, supporting multiple labels per comment.  
 - The model is evaluated on the test set.  
 - If the model outperforms the previous "production" model (based on AUC), it is **tagged as production** in **Weights & Biases**.  
-- The `tokenizer.pkl` is saved with the model artifact.
+- The `tokenizer.pkl` is saved with the model artifact.  
+- **Note:** `build_model.py` requires a machine with a GPU or a GPU-enabled environment such as **AWS SageMaker** to run efficiently.
 
 ---
 
