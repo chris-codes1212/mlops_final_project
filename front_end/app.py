@@ -23,7 +23,6 @@ def wait_for_backend():
 
 # Wrap all Streamlit UI logic inside a testable function.
 def run_app():
-    """"""
     
     # Title and instructions
     st.title("Comment Toxicity Classifier")
