@@ -77,11 +77,11 @@ jobs:
           docker push $REPO_URI:$IMAGE_TAG
 
       # build monitor image
-      - name: Build and Push backend service
+      - name: Build and Push monitoring service
         run: |
           IMAGE_TAG=latest
           REPO_URI=${{ secrets.MONITOR_ECR }}
-          docker build -t $REPO_URI:$IMAGE_TAG ./back_end
+          docker build -t $REPO_URI:$IMAGE_TAG ./monitor
           docker push $REPO_URI:$IMAGE_TAG
 
   deploy:
