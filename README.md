@@ -1,155 +1,141 @@
-# MLOps Final Project
+# MLOps Final Project: Toxic Comment Classification
 
-This repository implements an end‑to‑end MLOps pipeline featuring model
-training, deployment, monitoring, and CI/CD automation.
+This repository contains a full-stack MLOps project for multi-label toxicity classification of online comments using a deep learning LSTM model. The project includes **training**, a **FastAPI backend**, a **Streamlit frontend**, a **monitoring dashboard**, and infrastructure automation with **CloudFormation** and **Ansible**.
 
-## 🚀 Project Structure
+---
 
-    /training
-        build_model.py        # Builds and trains LSTM toxicity classifier
-        data/                 # Raw and processed training data
-        models/               # Saved model artifacts
+## Table of Contents
 
-    /backend
-        app.py                # FastAPI inference service
-        utils/                # Preprocessing + model loading helpers
+- [Project Structure](#project-structure)  
+- [Training the Model](#training-the-model)  
+- [FastAPI Backend](#fastapi-backend)  
+- [Streamlit Frontend](#streamlit-frontend)  
+- [Monitor Dashboard](#monitor-dashboard)  
+- [Docker and Deployment](#docker-and-deployment)  
+- [Infrastructure](#infrastructure)  
+- [Testing](#testing)  
+- [Populate DynamoDB](#populate-dynamodb)  
+- [Access](#access)  
 
-    /frontend
-        streamlit_app.py      # Monitoring dashboard UI
-        utils/                # Shared functions (fetch model stats, plots)
+---
 
-    /.github/workflows
-        ci.yml                # CI/CD automation (tests + deployment)
+## Project Structure
 
-------------------------------------------------------------------------
-
-## 🧠 Model Training
-
--   The project trains an **LSTM-based multi-label toxicity
-    classifier**.
--   Training uses **Weights & Biases** for experiment tracking.
--   Training is designed to run on **GPU-backed infrastructure**\
-    (Recommended: AWS `g4dn.xlarge` or any NVIDIA GPU environment).
-
-Run training:
-
-``` bash
-cd training
-python build_model.py
+```
+/
+├── training/             # Model training scripts
+│   └── build_model.py
+├── back_end/             # FastAPI backend
+│   ├── main.py
+│   ├── utils.py
+│   └── write_logs.py
+├── front_end/            # Streamlit frontend
+│   └── app.py
+├── monitor/              # Streamlit monitoring dashboard
+│   └── app.py
+├── infra/                # Infrastructure automation
+│   ├── fastapi_backend_ec2/
+│   ├── streamlit_frontend_ec2/
+│   └── model_monitor_ec2/
+├── tests/                # Unit tests
+│   ├── backend_testing/
+│   ├── frontend_testing/
+│   └── monitor_testing/
+└── populate_DB/          # Script to populate DynamoDB with test data
+    └── populate_DB.py
 ```
 
-Artifacts are stored locally and can be synced to W&B.
+---
 
-------------------------------------------------------------------------
+## Training the Model
 
-## ⚙️ Backend (FastAPI Inference Service)
+- `build_model.py` downloads the training data from **S3** (`train.csv`) as a pandas DataFrame.  
+- Data is cleaned of unnecessary symbols and tokenized.  
+- The dataset is split into training, validation, and test sets.  
+- Class weights are computed to handle imbalanced classes.  
+- An LSTM model is trained with callbacks for validation loss.  
+- The model is evaluated on the test set.  
+- If the model outperforms the previous "production" model (based on AUC), it is **tagged as production** in **Weights & Biases**.  
+- The `tokenizer.pkl` is saved with the model artifact.
 
-The backend exposes a `/predict` endpoint:
+---
 
-``` bash
-uvicorn app:app --host 0.0.0.0 --port 8000
-```
+## FastAPI Backend
 
-Loads the trained LSTM model and performs real‑time inference.
+- `/health` endpoint for health checks.  
+- `/predict` endpoint takes a text comment, preprocesses it, tokenizes it, and uses the best LSTM model from **Weights & Biases** to make predictions.  
+- Predicted labels are returned as a list.  
+- Each prediction is logged to **DynamoDB** (`toxic_app`) via `write_logs.py` with:  
+  - Timestamp  
+  - Comment text  
+  - Predicted labels  
+  - Probabilities for each label  
+  - Latency of prediction  
 
-------------------------------------------------------------------------
+---
 
-## 📊 Monitoring Dashboard (Streamlit)
+## Streamlit Frontend
 
-The `/frontend` directory contains a monitoring dashboard with:
+- `front_end/app.py` allows users to enter a comment and get predicted toxicity labels.  
+- Calls the FastAPI `/predict` endpoint.  
+- Displays predicted labels in a user-friendly interface.
 
--   Real-time model latency
--   Recent predictions
--   Error monitoring
--   Model confidence distribution
+---
 
-Run locally:
+## Monitor Dashboard
 
-``` bash
-streamlit run streamlit_app.py
-```
+- `monitor/app.py` downloads logged data from DynamoDB and training data from **Weights & Biases**.  
+- Features include:  
+  - Frequency histogram of predicted toxicity labels vs. training labels  
+  - Prediction latency over time  
+- Provides visual insights into model performance and distribution shifts.
 
-------------------------------------------------------------------------
+---
 
-## 🐳 Dockerization
+## Docker and Deployment
 
-Both backend and frontend services are fully containerized.
+- Each component (`backend`, `frontend`, `monitor`) has its **own Dockerfile**.  
+- Docker images are built and pushed to **AWS ECR**.  
+- Containers are run on separate **EC2 instances** provisioned with Ansible playbooks.  
 
-Build images:
+---
 
-``` bash
-docker build -t backend ./backend
-docker build -t frontend ./frontend
-```
+## Infrastructure
 
-------------------------------------------------------------------------
+- `infra/` contains CloudFormation templates and Ansible playbooks for EC2 provisioning:  
+  - `fastapi_backend_ec2/`  
+  - `streamlit_frontend_ec2/`  
+  - `model_monitor_ec2/`  
+- Playbooks install Docker, pull the relevant images, and run containers on the EC2 instances.
 
-## 🔄 CI/CD Pipeline (GitHub Actions → EC2)
+---
 
-The workflow includes:
+## Testing
 
-### ✔️ Steps
+- Unit tests in `tests/` use **pytest**.  
+- GitHub Actions workflow runs on pull requests:  
+  - Linting with **flake8** (warnings only)  
+  - Unit tests with **pytest** (failures block merge)
 
-1.  Run unit tests
-2.  Build & push Docker images to ECR
-3.  SSH into EC2
-4.  Pull & restart backend container
-5.  Use GitHub secrets:
-    -   `EC2_SSH_KEY`
-    -   `BACK_END_EC2`
-    -   `BACK_END_ECR`
-    -   `WANDB_API_KEY`
+---
 
-Example deployment step:
+## Populate DynamoDB
 
-``` yaml
-- name: SSH and deploy backend service
-  uses: appleboy/ssh-action@v0.1.7
-  with:
-    host: ${{ secrets.BACK_END_EC2 }}
-    username: ubuntu
-    key: ${{ secrets.EC2_SSH_KEY }}
-    script: |
-      docker pull $REPO_URI:$IMAGE_TAG
-      docker stop backend || true
-      docker rm backend || true
-      docker run -d --name backend -p 8000:8000 --restart unless-stopped         -e WANDB_API_KEY=${{ secrets.WANDB_API_KEY }}         $REPO_URI:$IMAGE_TAG
-  env:
-    IMAGE_TAG: latest
-    REPO_URI: ${{ secrets.BACK_END_ECR }}
-```
+- `populate_DB/populate_DB.py` uses additional CSV-formatted comment data.  
+- Calls the backend `/predict` endpoint to generate predictions and populate DynamoDB.  
+- Used for testing and generating meaningful monitor dashboard metrics.
 
-------------------------------------------------------------------------
+---
 
-## 📁 Requirements
+## Access
 
-Install dependencies:
+- **Frontend:** [http://50.17.169.167:8501](http://50.17.169.167:8501)  
+- **Monitor Dashboard:** [http://3.229.230.170:8501](http://3.229.230.170:8501)  
+- **FastAPI Backend:** [http://3.215.45.153:8000](http://3.215.45.153:8000) (can test in Postman)
 
-``` bash
-pip install -r requirements.txt
-```
+---
 
-------------------------------------------------------------------------
+## Notes
 
-## 🧪 Tests
-
-Unit tests are automatically run through GitHub Actions.
-
-Run locally:
-
-``` bash
-pytest
-```
-
-------------------------------------------------------------------------
-
-## 🤝 Contributing
-
-Pull requests are welcome!\
-Please follow formatting + linting rules before opening a PR.
-
-------------------------------------------------------------------------
-
-## 📄 License
-
-MIT License.
+- Make sure your **AWS credentials / IAM roles** have access to ECR, S3, and DynamoDB.  
+- Backend relies on the production-tagged model in **Weights & Biases** for predictions.
