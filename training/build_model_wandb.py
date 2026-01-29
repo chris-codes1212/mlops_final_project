@@ -15,6 +15,7 @@ import os
 import wandb
 from wandb.integration.keras import WandbMetricsLogger
 
+# set random seed
 np.random.seed(42)  # NEVER change this line
 
 tf.keras.mixed_precision.set_global_policy("mixed_float16")
